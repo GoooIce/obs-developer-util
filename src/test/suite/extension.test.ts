@@ -21,7 +21,7 @@ suite('Extension Test Suite', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global as any).WebSocket = require('ws');
     }
-    const subject = webSocket('ws://192.168.1.254:4455');
+    const subject = webSocket('ws://localhost:4455');
     subject.subscribe({
       next: (msg) => console.log('message received: ' + msg), // Called whenever there is a message from the server.
       error: (err) => console.log(err), // Called if at any point WebSocket API signals some kind of error.
