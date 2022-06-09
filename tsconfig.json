@@ -1,6 +1,6 @@
 {
   "include": ["**/*"],
-  "exclude": ["__mocks__", "node_modules", "tests"],
+  "exclude": ["__mocks__", "**/__mocks__/*", "node_modules", "tests"],
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2020",
