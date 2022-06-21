@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
           eventSubscriptions: 33,
         },
       });
-      vscode.window.showInformationMessage(`Hello is sending... Keep going!`);
+      vscode.window.showInformationMessage(`$(eye) Hello is sending... Keep going!`);
     })
   );
 
@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable);
 
-  myStatusBarItem.text = `$(megaphone) line(s) selected`;
+  myStatusBarItem.text = `$(eye) line(s) selected`;
   myStatusBarItem.show();
 }
 

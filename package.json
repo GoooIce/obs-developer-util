@@ -14,6 +14,38 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "obs-explorer",
+          "title": "OBS Explorer",
+          "icon": ""
+        }
+      ]
+    },
+    "views": {
+      "obs-explorer": [
+        {
+          "id": "obs-developer-util-control",
+          "name": "Control Panel"
+        },
+        {
+          "id": "obs-developer-util-bullet",
+          "name": "Bullet"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "obs-developer-util-control",
+        "contents": "In order to use obs features, you can connect a obs from a WebSocket URL.\n[Open WebSocket URL](command:obs-developer-util.helloBar)\nTo learn more about how to use obs and source control in VS Code [read our docs](https://miantu.net).",
+        "when": "true"
+      },
+      {
+        "view": "obs-developer-util-bullet",
+        "contents": "In order to use bullet features, you can connect from a Live Chat URL.\n[Open Bilibili Live URL](command:obs-developer-util.helloBar)\n"
+      }
+    ],
     "commands": [
       {
         "command": "obs-developer-util.helloWorld",
@@ -38,7 +70,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test:e2e": "node ./out/test/runTest.js",
+    "test": "jest"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
