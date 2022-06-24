@@ -89,7 +89,7 @@ const EventEmitter = jest.fn().mockImplementation(() => {
   };
 });
 
-export default {
+export = {
   CodeLens,
   languages,
   StatusBarAlignment,

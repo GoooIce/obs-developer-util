@@ -8,6 +8,9 @@ export const StatusBar = class StatusBar {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this.statusBarItem.command = 'obs-developer-util.BarWithOBS';
   }
+  register() {
+    return '';
+  }
 };
 
 // export default {
