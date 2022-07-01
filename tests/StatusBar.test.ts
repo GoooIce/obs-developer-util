@@ -1,15 +1,17 @@
+jest.unmock('../src/StatusBar');
 import { StatusBar } from '../src/StatusBar';
-import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 
-describe('StatusBar', () => {
+describe('given StatusBar', () => {
   it('should create an instance', () => {
     expect(new StatusBar()).toBeTruthy();
   });
 
-  it('register 3 status bar items', () => {
-    // const createStatusBarItem = vscode.window.createStatusBarItem() as unknown as jest.Mock<{}>;
+  describe('connect obs with status bar', () => {
     const statusBar = new StatusBar();
-    statusBar.register();
-    expect(vscode.window.createStatusBarItem).toBeCalledTimes(3);
+    it('do not have connect url', () => {
+      statusBar.updateStatus('Empty');
+      expect(statusBar.recordItem.text).toEqual('Click to connect');
+    });
   });
 });

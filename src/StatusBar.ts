@@ -1,15 +1,22 @@
 import * as vscode from 'vscode';
 
+const StatusBarAlignment = vscode.StatusBarAlignment.Right;
+
+export type ConnectStatus = 'Empty' | 'UrlError' | 'Connected' | 'FailedConnect' | 'ServerError';
+
 export const StatusBar = class StatusBar {
-  status: string;
-  statusBarItem: vscode.StatusBarItem;
-  constructor() {
-    this.status = 'Ready';
-    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    this.statusBarItem.command = 'obs-developer-util.BarWithOBS';
+  updateStatus(status: ConnectStatus) {
+    this.recordItem.text = status;
+    this.streamItem.text = status;
   }
-  register() {
-    return '';
+  streamItem: vscode.StatusBarItem;
+  recordItem: vscode.StatusBarItem;
+  constructor() {
+    this.streamItem = vscode.window.createStatusBarItem(StatusBarAlignment, 101);
+    this.recordItem = vscode.window.createStatusBarItem(StatusBarAlignment, 102);
+  }
+  public register(): vscode.StatusBarItem[] {
+    return [this.recordItem, this.streamItem];
   }
 };
 
