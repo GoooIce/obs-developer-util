@@ -11,7 +11,7 @@ describe('given StatusBar', () => {
     const statusBar = new StatusBar();
     it('do not have connect url', () => {
       statusBar.updateStatus('Empty');
-      expect(statusBar.recordItem.text).toEqual('Click to connect');
+      expect(statusBar.recordItem.text).toEqual('Empty');
     });
   });
 });

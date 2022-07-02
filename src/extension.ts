@@ -2,13 +2,14 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { webSocket } from 'rxjs/webSocket';
+import { keychain } from './keychain';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('obs-developer-util is now active!');
@@ -19,6 +20,10 @@ export function activate(context: vscode.ExtensionContext) {
   }
   const config = vscode.workspace.getConfiguration(extensionKey);
   const obs_ws_address = config.get<string>('address', 'localhost:4455');
+  const obs_ws_password = await keychain?.getPassword(extensionKey, obs_ws_address);
+  if (obs_ws_password) {
+    vscode.window.showInformationMessage(obs_ws_password);
+  }
   const subject = webSocket(`ws://${obs_ws_address}`);
   subject.subscribe({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

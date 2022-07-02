@@ -98,13 +98,14 @@
     "pretest:e2e": "yarn run compile && yarn run lint",
     "pretest": "yarn run compile && yarn run lint",
     "lint": "eslint src --ext ts",
-    "test:e2e": "node ./out/test/runTest.js",
+    "test:e2e": "node ./out/src/test/runTest.js",
     "test": "jest"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/glob": "^7.2.0",
     "@types/jest": "^27.0.1",
+    "@types/keytar": "^4.4.2",
     "@types/mocha": "^9.1.1",
     "@types/node": "16.11.36",
     "@types/vscode": "^1.67.0",
