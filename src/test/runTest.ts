@@ -12,13 +12,13 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-    const vscodeExecutablePath = path.resolve(
-      '/Applications/',
-      'Visual Studio Code.app/Contents/MacOS/Electron'
-    );
+    // const vscodeExecutablePath = path.resolve(
+    //   '/Applications/',
+    //   'Visual Studio Code.app/Contents/MacOS/Electron'
+    // );
     // Download VS Code, unzip it and run the integration test
     await runTests({
-      vscodeExecutablePath,
+      // vscodeExecutablePath,
       extensionDevelopmentPath,
       extensionTestsPath,
     });
