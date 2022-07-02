@@ -1,7 +1,17 @@
 {
   "name": "obs-developer-util",
-  "displayName": "obs-developer-util",
+  "displayName": "OBS-DeveloperUtil",
   "description": "use vscode drive obs.",
+  "author": {
+    "name": "GoooIce",
+    "url": "https://github.com/GoooIce"
+  },
+  "publisher": "goooice",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoooIce/obs-developer-util.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.67.0"
@@ -14,52 +24,69 @@
   ],
   "main": "./out/src/extension.js",
   "contributes": {
+    "configuration": [
+      {
+        "title": "OBS Developer Util",
+        "properties": {
+          "OBS-DeveloperUtil.address": {
+            "type": "string",
+            "default": "localhost:4455",
+            "description": "OBS Websocket address"
+          },
+          "OBS-DeveloperUtil.autoConnect": {
+            "type": "boolean",
+            "default": false,
+            "description": "If active, this extension will try to automatically connect to the OBS Websocket endpoint"
+          }
+        }
+      }
+    ],
     "viewsContainers": {
       "panel": [
         {
           "id": "obs-explorer",
           "title": "OBS Explorer",
-          "icon": ""
+          "icon": "$(vm)"
         }
       ]
     },
     "views": {
       "obs-explorer": [
         {
-          "id": "obs-developer-util-control",
+          "id": "OBS-DeveloperUtil-control",
           "name": "Control Panel"
         },
         {
-          "id": "obs-developer-util-bullet",
+          "id": "OBS-DeveloperUtil-bullet",
           "name": "Bullet"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "obs-developer-util-control",
-        "contents": "In order to use obs features, you can connect a obs from a WebSocket URL.\n[Open WebSocket URL](command:obs-developer-util.helloBar)\nTo learn more about how to use obs and source control in VS Code [read our docs](https://miantu.net).",
+        "view": "OBS-DeveloperUtil-control",
+        "contents": "In order to use obs features, you can connect a obs from a WebSocket URL.\n[Open WebSocket URL](command:OBS-DeveloperUtil.helloBar)\nTo learn more about how to use obs and source control in VS Code [read our docs](https://miantu.net).",
         "when": "true"
       },
       {
-        "view": "obs-developer-util-bullet",
-        "contents": "In order to use bullet features, you can connect from a Live Chat URL.\n[Open Bilibili Live URL](command:obs-developer-util.helloBar)\n"
+        "view": "OBS-DeveloperUtil-bullet",
+        "contents": "In order to use bullet features, you can connect from a Live Chat URL.\n[Open Bilibili Live URL](command:OBS-DeveloperUtil.helloBar)\n"
       }
     ],
     "commands": [
       {
-        "command": "obs-developer-util.helloWorld",
+        "command": "OBS-DeveloperUtil.helloWorld",
         "title": "Hello Status Bar"
       },
       {
-        "command": "obs-developer-util.helloBar",
-        "title": "Hello Bar"
+        "command": "OBS-DeveloperUtil.connect",
+        "title": "connect obs"
       }
     ],
     "statusBarItems": [
       {
-        "command": "obs-developer-util.statusBar",
-        "text": "$(megaphone) line(s) selected",
+        "command": "OBS-DeveloperUtil.statusBar",
+        "text": "$(megaphone) this line(s) selected",
         "alignment": "right"
       }
     ]

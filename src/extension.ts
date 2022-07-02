@@ -3,18 +3,23 @@
 import * as vscode from 'vscode';
 import { webSocket } from 'rxjs/webSocket';
 
+const extensionKey = 'OBS-DeveloperUtil';
+const connectCommandId = `${extensionKey}.connect`;
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "obs-developer-util" is now active!');
+  console.log('obs-developer-util is now active!');
 
   if (typeof global !== 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).WebSocket = require('ws');
   }
-  const subject = webSocket('ws://192.168.1.254:4455');
+  const config = vscode.workspace.getConfiguration(extensionKey);
+  const obs_ws_address = config.get<string>('address', 'localhost:4455');
+  const subject = webSocket(`ws://${obs_ws_address}`);
   subject.subscribe({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     next: (msg: any) => {
@@ -38,9 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage('Hello World from obs-developer-util!');
   });
 
-  const myCommandId = 'obs-developer-util.helloBar';
   context.subscriptions.push(
-    vscode.commands.registerCommand(myCommandId, () => {
+    vscode.commands.registerCommand(connectCommandId, () => {
       subject.next({
         op: 1,
         d: {
@@ -49,13 +53,13 @@ export function activate(context: vscode.ExtensionContext) {
           eventSubscriptions: 33,
         },
       });
-      vscode.window.showInformationMessage(`$(eye) Hello is sending... Keep going!`);
+      vscode.window.showInformationMessage(`$(eye) op1 is sending... Keep going!`);
     })
   );
 
   // create a new status bar item that we can now manage
   const myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  myStatusBarItem.command = myCommandId;
+  myStatusBarItem.command = connectCommandId;
   context.subscriptions.push(myStatusBarItem);
 
   context.subscriptions.push(disposable);
