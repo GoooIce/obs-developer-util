@@ -31,9 +31,20 @@ export async function activate(context: vscode.ExtensionContext) {
       if (msg.op === 0) {
         vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
       }
-      // switch (msg.op) {
-      // }
-      // vscode.window.showInformationMessage(`message received: ${msg}`);
+      if (msg.op === 2) {
+        vscode.window.showInformationMessage(
+          `rpc version: ${msg.d.negotiatedRpcVersion}, now ready for normal operation`
+        );
+        subject.next({
+          op: 3,
+          d: {
+            eventSubscriptions: `(1 << 2)`,
+          },
+        });
+      }
+      if (msg.op === 5) {
+        vscode.window.showInformationMessage(`event no.${msg.d.eventIntent} : ${msg.d.eventType}`);
+      }
     }, // Called whenever there is a message from the server.
     error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
     complete: () => vscode.window.showInformationMessage('链接结束'), // Called when connection is closed (for whatever reason).
