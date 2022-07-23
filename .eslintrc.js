@@ -22,6 +22,10 @@ module.exports = {
     // customize argument ignore pattern
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'jest/expect-expect': [
+      'error',
+      { assertFunctionNames: ['expect', 'expectObservable', 'expectSubscriptions'] },
+    ],
   },
   overrides: [
     {
