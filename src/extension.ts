@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { webSocket } from 'rxjs/webSocket';
 import { keychain } from './keychain';
-import { genAuthString } from './obs-websocket';
+import { genAuthString } from './obs-websocket/util';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;

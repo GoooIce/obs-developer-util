@@ -1,5 +1,5 @@
-jest.unmock('../src/obs-websocket');
-import { genAuthString } from '../src/obs-websocket';
+jest.unmock('../src/obs-websocket/util');
+import { genAuthString } from '../src/obs-websocket/util';
 
 describe('authentication', () => {
   it('gen obs auth string', () => {
