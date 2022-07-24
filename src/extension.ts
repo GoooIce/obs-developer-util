@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { webSocket } from 'rxjs/webSocket';
 import { keychain } from './keychain';
+import { genAuthString } from './obs-websocket';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -40,7 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
           op: 1,
           d: {
             rpcVersion: 1,
-            // authentication: "Dj6cLS+jrNA0HpCArRg0Z/Fc+YHdt2FQfAvgD1mip6Y=",
+            authentication: genAuthString(msg.d.authentication, 'skWGSxGsWraEPGvc'),
             eventSubscriptions: 1 << 2,
           },
         });
