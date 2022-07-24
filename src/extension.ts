@@ -24,23 +24,29 @@ export async function activate(context: vscode.ExtensionContext) {
   if (obs_ws_password) {
     vscode.window.showInformationMessage(obs_ws_password);
   }
-  const subject = webSocket(`ws://${obs_ws_address}`);
+  type OpCode = {
+    op: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    d?: any;
+  };
+  const subject = webSocket<OpCode>(`ws://${obs_ws_address}`);
+
   subject.subscribe({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     next: (msg: any) => {
       if (msg.op === 0) {
         vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
-      }
-      if (msg.op === 2) {
-        vscode.window.showInformationMessage(
-          `rpc version: ${msg.d.negotiatedRpcVersion}, now ready for normal operation`
-        );
         subject.next({
-          op: 3,
+          op: 1,
           d: {
-            eventSubscriptions: `(1 << 2)`,
+            rpcVersion: 1,
+            // authentication: "Dj6cLS+jrNA0HpCArRg0Z/Fc+YHdt2FQfAvgD1mip6Y=",
+            eventSubscriptions: 1 << 2,
           },
         });
+      }
+      if (msg.op === 2) {
+        console.log(msg);
       }
       if (msg.op === 5) {
         vscode.window.showInformationMessage(`event no.${msg.d.eventIntent} : ${msg.d.eventType}`);
@@ -62,14 +68,12 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(connectCommandId, () => {
       subject.next({
-        op: 1,
+        op: 3,
         d: {
-          rpcVersion: 1,
-          // authentication: "Dj6cLS+jrNA0HpCArRg0Z/Fc+YHdt2FQfAvgD1mip6Y=",
-          eventSubscriptions: 33,
+          eventSubscriptions: 1 << 7,
         },
       });
-      vscode.window.showInformationMessage(`$(eye) op1 is sending... Keep going!`);
+      vscode.window.showInformationMessage(`$(eye) op3 is sending... Keep going!`);
     })
   );
 
@@ -82,6 +86,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   myStatusBarItem.text = `$(eye) line(s) selected`;
   myStatusBarItem.show();
+  // subOpCode0.unsubscribe();
 }
 
 // this method is called when your extension is deactivated
