@@ -100,7 +100,7 @@
     "lint": "eslint src --ext ts",
     "test:e2e": "node ./out/src/test/runTest.js",
     "test": "jest",
-    "commit": "git add -A && git commit -m \"TCR @ timestamp\"",
+    "commit": "git add -A && git commit",
     "revert": "git reset --head",
     "tcr": "yarn run test && yarn run commit || yarn run revert"
   },
