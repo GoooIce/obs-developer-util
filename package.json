@@ -99,7 +99,10 @@
     "pretest": "yarn run compile && yarn run lint",
     "lint": "eslint src --ext ts",
     "test:e2e": "node ./out/src/test/runTest.js",
-    "test": "jest"
+    "test": "jest",
+    "commit": "git add -A && git commit -m \"TCR @ timestamp\"",
+    "revert": "git reset --head",
+    "tcr": "yarn run test && yarn run commit || yarn run revert"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
