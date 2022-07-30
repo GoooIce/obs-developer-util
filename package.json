@@ -101,7 +101,7 @@
     "test:e2e": "node ./out/src/test/runTest.js",
     "test": "jest",
     "commit": "git add -A && git commit",
-    "revert": "git reset --head",
+    "revert": "git reset --hard",
     "tcr": "yarn run test && yarn run commit || yarn run revert"
   },
   "devDependencies": {
