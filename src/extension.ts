@@ -1,12 +1,15 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { webSocket } from 'rxjs/webSocket';
+import { webSocket, WebSocketSubjectConfig } from 'rxjs/webSocket';
+// import { retry } from 'rxjs';
 import { keychain } from './keychain';
-import { genAuthString } from './obs-websocket/util';
+import { genIdentifyMessage } from './obs-websocket/util';
+import { EventSubscription } from './obs-websocket/types';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
+const reidentifyCommandId = `${extensionKey}.reidentify`;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -30,44 +33,31 @@ export async function activate(context: vscode.ExtensionContext) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     d?: any;
   };
-  const subject = webSocket<OpCode>(`ws://${obs_ws_address}`);
-
-  subject.subscribe({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    next: (msg: any) => {
-      if (msg.op === 0) {
-        vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
-        subject.next({
-          op: 1,
-          d: {
-            rpcVersion: 1,
-            authentication: genAuthString(msg.d.authentication, 'skWGSxGsWraEPGvc'),
-            eventSubscriptions: 1 << 2,
-          },
-        });
-      }
-      if (msg.op === 2) {
-        console.log(msg);
-      }
-      if (msg.op === 5) {
-        vscode.window.showInformationMessage(`event no.${msg.d.eventIntent} : ${msg.d.eventType}`);
-      }
-    }, // Called whenever there is a message from the server.
-    error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
-    complete: () => vscode.window.showInformationMessage('链接结束'), // Called when connection is closed (for whatever reason).
-  });
+  const observer = {
+    next: (e: CloseEvent) => {
+      vscode.window.showErrorMessage(e.reason);
+      console.log('Observer got a next value: ' + e.reason);
+    },
+    error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
+    complete: () => console.log('Observer got a complete notification'),
+  };
+  const serverConfig: WebSocketSubjectConfig<OpCode> = {
+    url: `ws://${obs_ws_address}`,
+    closeObserver: observer,
+  };
+  const subject = webSocket(serverConfig);
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand('obs-developer-util.helloWorld', () => {
+  const disposable = vscode.commands.registerCommand(`${extensionKey}.helloWorld`, () => {
     // The code you place here will be executed every time your command is executed
     // Display a message box to the user
     vscode.window.showInformationMessage('Hello World from obs-developer-util!');
   });
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(connectCommandId, () => {
+    vscode.commands.registerCommand(reidentifyCommandId, () => {
       subject.next({
         op: 3,
         d: {
@@ -75,6 +65,33 @@ export async function activate(context: vscode.ExtensionContext) {
         },
       });
       vscode.window.showInformationMessage(`$(eye) op3 is sending... Keep going!`);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(connectCommandId, () => {
+      vscode.window.showInformationMessage(`connecting`);
+      subject.subscribe({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        next: (msg: any) => {
+          if (msg.op === 0) {
+            vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
+            subject.next(genIdentifyMessage(msg, EventSubscription.Outputs, ''));
+          }
+          if (msg.op === 2) {
+            console.log(msg);
+          }
+          if (msg.op === 5) {
+            vscode.window.showInformationMessage(
+              `event no.${msg.d.eventIntent} : ${msg.d.eventType}`
+            );
+          }
+        }, // Called whenever there is a message from the server.
+        error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
+        complete: () => {
+          vscode.window.showInformationMessage('链接结束');
+        }, // Called when connection is closed (for whatever reason).
+      });
     })
   );
 
