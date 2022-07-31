@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { IncomingMessage, WebSocketOpCode } from './types';
+import { IncomingMessage, WebSocketOpCode, EventSubscription, OutgoingMessage } from './types';
 
 export function genAuthString(
   { salt, challenge }: { salt: string; challenge: string },
@@ -17,6 +17,23 @@ export function genAuthString(
 }
 
 export function needAuth(msg: IncomingMessage<WebSocketOpCode.Hello>) {
-  if (msg.d.authentication) return true;
+  if (msg.d.authentication !== undefined) return true;
   return false;
+}
+
+export function genIdentifyMessage(
+  msg: IncomingMessage<WebSocketOpCode.Hello>,
+  env: EventSubscription,
+  password: string
+) {
+  const identify: OutgoingMessage<WebSocketOpCode.Identify> = {
+    op: WebSocketOpCode.Identify,
+    d: {
+      rpcVersion: 1,
+      eventSubscriptions: 0,
+    },
+  };
+  if (msg.d.authentication !== undefined)
+    identify.d.authentication = genAuthString(msg.d.authentication, password);
+  return identify;
 }

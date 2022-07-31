@@ -40,15 +40,28 @@ describe('authentication', () => {
     expect(genAuthString({ salt, challenge }, password)).toBe(rightAuthString);
   });
   it('re back hello op by identify', () => {
-    const outMsg: OutgoingMessage<WebSocketOpCode.Identify> = genIdentifyMessage(
+    const outWithAuthMsg: OutgoingMessage<WebSocketOpCode.Identify> = genIdentifyMessage(
       needAuthMsg,
-      EventSubscription.None
+      EventSubscription.None,
+      password
     );
-    expect(outMsg).toBe({
+    expect(outWithAuthMsg).toStrictEqual({
       op: 1,
       d: {
         rpcVersion: 1,
         authentication: rightAuthString,
+        eventSubscriptions: 0,
+      },
+    });
+    const outWithOutAuthMsg: OutgoingMessage<WebSocketOpCode.Identify> = genIdentifyMessage(
+      doNotNeedAuthMsg,
+      EventSubscription.None,
+      ''
+    );
+    expect(outWithOutAuthMsg).toStrictEqual({
+      op: 1,
+      d: {
+        rpcVersion: 1,
         eventSubscriptions: 0,
       },
     });
