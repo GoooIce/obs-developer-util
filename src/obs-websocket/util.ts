@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { IncomingMessage, WebSocketOpCode } from './types';
 
 export function genAuthString(
   { salt, challenge }: { salt: string; challenge: string },
@@ -13,4 +14,9 @@ export function genAuthString(
     .update(hash + challenge)
     .digest('base64');
   return authString;
+}
+
+export function needAuth(msg: IncomingMessage<WebSocketOpCode.Hello>) {
+  if (msg.d.authentication) return true;
+  return false;
 }
