@@ -46,12 +46,14 @@ export async function activate(context: vscode.ExtensionContext) {
         });
       }
       if (1006 === e.code) {
-        vscode.window.showWarningMessage('请检查obs-websocket状态');
+        vscode.window.showWarningMessage('请检查obs-websocket状态,[帮助](http://miantu.net)');
       } else {
-        vscode.window.showErrorMessage(`${e.code} + ${e.reason}`, '帮助').then(() => {
-          // TODO: open url
-          console.log('open http://miantu.net/ext');
-        });
+        vscode.window
+          .showErrorMessage(`${e.code} + ${e.reason}, [帮助](http://miantu.net)`, '帮助')
+          .then(() => {
+            // TODO: open url
+            console.log('open http://miantu.net/ext');
+          });
       }
     },
     error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
