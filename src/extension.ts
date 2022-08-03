@@ -5,7 +5,12 @@ import { webSocket, WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
 import { keychain } from './keychain';
 import { genIdentifyMessage } from './obs-websocket/util';
-import { EventSubscription, WebSocketOpCode, Message } from './obs-websocket/types';
+import {
+  EventSubscription,
+  WebSocketOpCode,
+  WebSocketCloseCode,
+  Message,
+} from './obs-websocket/types';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -38,14 +43,14 @@ export async function activate(context: vscode.ExtensionContext) {
   // };
   const observer = {
     next: (e: CloseEvent) => {
-      if (4009 === e.code) {
+      if (WebSocketCloseCode.AuthenticationFailed === e.code) {
         vscode.window.showInputBox().then(async (input_value) => {
           await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
           vscode.window.showInformationMessage(`retry connecting`);
           vscode.commands.executeCommand(connectCommandId);
         });
       }
-      if (1006 === e.code) {
+      if (WebSocketCloseCode.CantConnect === e.code) {
         vscode.window.showWarningMessage('请检查obs-websocket状态,[帮助](http://miantu.net)');
       } else {
         vscode.window
