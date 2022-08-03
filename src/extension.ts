@@ -31,16 +31,9 @@ export async function activate(context: vscode.ExtensionContext) {
     (global as any).WebSocket = require('ws');
   }
   const config = vscode.workspace.getConfiguration(extensionKey);
+  // TODO: need reload
   const obs_ws_address = config.get<string>('address', 'localhost:4455');
-  // const obs_ws_password = await keychain?.getPassword(extensionKey, obs_ws_address);
-  // if (obs_ws_password) {
-  //   vscode.window.showInformationMessage(obs_ws_password);
-  // }
-  // type OpCode = {
-  //   op: WebSocketOpCode;
-  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //   d?: any;
-  // };
+
   const observer = {
     next: (e: CloseEvent) => {
       if (WebSocketCloseCode.AuthenticationFailed === e.code) {
@@ -51,14 +44,19 @@ export async function activate(context: vscode.ExtensionContext) {
         });
       }
       if (WebSocketCloseCode.CantConnect === e.code) {
-        vscode.window.showWarningMessage('请检查obs-websocket状态,[帮助](http://miantu.net)');
-      } else {
         vscode.window
-          .showErrorMessage(`${e.code} + ${e.reason}, [帮助](http://miantu.net)`, '帮助')
+          .showWarningMessage(
+            `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](http://miantu.net)`,
+            '修改地址'
+          )
           .then(() => {
-            // TODO: open url
-            console.log('open http://miantu.net/ext');
+            vscode.window.showInputBox().then(async (input_value) => {
+              config.update('address', input_value);
+              vscode.commands.executeCommand(connectCommandId);
+            });
           });
+      } else {
+        vscode.window.showErrorMessage(`${e.code} + ${e.reason}, [帮助](http://miantu.net)`);
       }
     },
     error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
@@ -125,7 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable);
 
-  myStatusBarItem.text = `$(eye) line(s) selected`;
+  myStatusBarItem.text = `$(eye) connect obs`;
   myStatusBarItem.show();
   // subOpCode0.unsubscribe();
 }
