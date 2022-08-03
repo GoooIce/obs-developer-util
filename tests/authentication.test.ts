@@ -1,10 +1,5 @@
 jest.unmock('../src/obs-websocket/util');
-import {
-  EventSubscription,
-  IncomingMessage,
-  OutgoingMessage,
-  WebSocketOpCode,
-} from '../src/obs-websocket/types';
+import { EventSubscription, Message, WebSocketOpCode } from '../src/obs-websocket/types';
 import { genAuthString, needAuth, genIdentifyMessage } from '../src/obs-websocket/util';
 
 describe('authentication', () => {
@@ -12,7 +7,7 @@ describe('authentication', () => {
   const challenge = '+IxH4CnCiqpX1rM9scsNynZzbOe4KhDeYcTNS3PDaeY=';
   const password = 'supersecretpassword';
   const rightAuthString = '1Ct943GAT+6YQUUX47Ia/ncufilbe6+oD6lY+5kaCu4=';
-  const needAuthMsg: IncomingMessage<WebSocketOpCode.Hello> = {
+  const needAuthMsg: Message<WebSocketOpCode.Hello> = {
     op: WebSocketOpCode.Hello,
     d: {
       obsWebSocketVersion: '5.0.0',
@@ -23,7 +18,7 @@ describe('authentication', () => {
       },
     },
   };
-  const doNotNeedAuthMsg: IncomingMessage<WebSocketOpCode.Hello> = {
+  const doNotNeedAuthMsg: Message<WebSocketOpCode.Hello> = {
     op: WebSocketOpCode.Hello,
     d: {
       obsWebSocketVersion: '5.0.0',
@@ -40,7 +35,7 @@ describe('authentication', () => {
     expect(genAuthString({ salt, challenge }, password)).toBe(rightAuthString);
   });
   it('re back hello op by identify', () => {
-    const outWithAuthMsg: OutgoingMessage<WebSocketOpCode.Identify> = genIdentifyMessage(
+    const outWithAuthMsg: Message<WebSocketOpCode.Identify> = genIdentifyMessage(
       needAuthMsg,
       EventSubscription.None,
       password
@@ -53,7 +48,7 @@ describe('authentication', () => {
         eventSubscriptions: 0,
       },
     });
-    const outWithOutAuthMsg: OutgoingMessage<WebSocketOpCode.Identify> = genIdentifyMessage(
+    const outWithOutAuthMsg: Message<WebSocketOpCode.Identify> = genIdentifyMessage(
       doNotNeedAuthMsg,
       EventSubscription.None,
       ''

@@ -5,7 +5,7 @@ import { webSocket, WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
 import { keychain } from './keychain';
 import { genIdentifyMessage } from './obs-websocket/util';
-import { EventSubscription, WebSocketOpCode } from './obs-websocket/types';
+import { EventSubscription, WebSocketOpCode, Message } from './obs-websocket/types';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -31,11 +31,11 @@ export async function activate(context: vscode.ExtensionContext) {
   // if (obs_ws_password) {
   //   vscode.window.showInformationMessage(obs_ws_password);
   // }
-  type OpCode = {
-    op: WebSocketOpCode;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    d?: any;
-  };
+  // type OpCode = {
+  //   op: WebSocketOpCode;
+  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //   d?: any;
+  // };
   const observer = {
     next: (e: CloseEvent) => {
       if (4009 === e.code) {
@@ -59,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext) {
     error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
     complete: () => console.log('Observer got a complete notification'),
   };
-  const serverConfig: WebSocketSubjectConfig<OpCode> = {
+  const serverConfig: WebSocketSubjectConfig<Message> = {
     url: `ws://${obs_ws_address}`,
     closeObserver: observer,
   };

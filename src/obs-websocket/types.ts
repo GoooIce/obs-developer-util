@@ -255,23 +255,14 @@ export enum RequestBatchExecutionType {
 }
 
 // WebSocket Message Types
-export type IncomingMessage<Type = keyof IncomingMessageTypes> =
-  Type extends keyof IncomingMessageTypes
-    ? {
-        op: Type;
-        d: IncomingMessageTypes[Type];
-      }
-    : never;
+export type Message<Type = keyof MessageTypes> = Type extends keyof MessageTypes
+  ? {
+      op: Type;
+      d: MessageTypes[Type];
+    }
+  : never;
 
-export type OutgoingMessage<Type = keyof OutgoingMessageTypes> =
-  Type extends keyof OutgoingMessageTypes
-    ? {
-        op: Type;
-        d: OutgoingMessageTypes[Type];
-      }
-    : never;
-
-export interface IncomingMessageTypes {
+export interface MessageTypes {
   /**
    * Message sent from the server immediately on client connection. Contains authentication information if auth is required. Also contains RPC version for version negotiation.
    */
@@ -310,9 +301,6 @@ export interface IncomingMessageTypes {
    * obs-websocket is responding to a request coming from a client
    */
   [WebSocketOpCode.RequestResponse]: ResponseMessage;
-}
-
-export interface OutgoingMessageTypes {
   /**
    * Response to Hello message, should contain authentication string if authentication is required, along with PubSub subscriptions and other session parameters.
    */
@@ -2128,7 +2116,7 @@ export interface OBSResponseTypes {
     /**
      * Total number of messages sent by obs-websocket to the client
      */
-    webSocketSessionOutgoingMessages: number;
+    webSocketSessionMessages: number;
   };
   BroadcastCustomEvent: undefined;
   CallVendorRequest: {
