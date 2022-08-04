@@ -75,12 +75,14 @@
     ],
     "commands": [
       {
-        "command": "OBS-DeveloperUtil.helloWorld",
-        "title": "Hello Status Bar"
+        "command": "OBS-DeveloperUtil.tipWithColors",
+        "title": "Before record tip 3s color message use peacock",
+        "category": "OBS Commands"
       },
       {
         "command": "OBS-DeveloperUtil.connect",
-        "title": "connect obs"
+        "title": "connect obs",
+        "category": "OBS Commands"
       }
     ],
     "statusBarItems": [

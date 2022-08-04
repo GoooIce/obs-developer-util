@@ -11,6 +11,7 @@ import {
   WebSocketCloseCode,
   Message,
 } from './obs-websocket/types';
+import { Observable, Subscriber } from 'rxjs';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -36,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const observer = {
     next: (e: CloseEvent) => {
+      const obs_ws_address = config.get<string>('address', 'localhost:4455');
       if (WebSocketCloseCode.AuthenticationFailed === e.code) {
         vscode.window.showInputBox().then(async (input_value) => {
           await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
@@ -62,49 +64,71 @@ export async function activate(context: vscode.ExtensionContext) {
     error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
     complete: () => console.log('Observer got a complete notification'),
   };
-  const serverConfig: WebSocketSubjectConfig<Message> = {
-    url: `ws://${obs_ws_address}`,
-    closeObserver: observer,
-  };
-  const subject = webSocket(serverConfig);
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand(`${extensionKey}.helloWorld`, () => {
+  const disposable = vscode.commands.registerCommand(`${extensionKey}.tipWithColors`, async () => {
     // The code you place here will be executed every time your command is executed
     // Display a message box to the user
     vscode.window.showInformationMessage('Hello World from obs-developer-util!');
+    const peacock_config = vscode.workspace.getConfiguration('peacock');
+    let i = 1;
+    const color$ = new Observable((subscriber: Subscriber<string>) => {
+      setTimeout(() => {
+        if (4 > i) subscriber.complete();
+        subscriber.next(i % 2 == 1 ? '#42b883' : '#f00');
+        i++;
+      }, 10000);
+    });
+
+    color$.subscribe({
+      next(color) {
+        console.log(color);
+
+        peacock_config.update('color', color);
+      },
+      complete() {
+        // vscode.commands.executeCommand('peacock.resetWorkspaceColors');
+      },
+      error(err) {
+        vscode.window.showErrorMessage(err);
+      },
+    });
   });
 
   context.subscriptions.push(
     vscode.commands.registerCommand(reidentifyCommandId, () => {
-      subject.next({
-        op: WebSocketOpCode.Reidentify,
-        d: {
-          eventSubscriptions: 1 << 7,
-        },
-      });
-      vscode.window.showInformationMessage(`$(eye) op3 is sending... Keep going!`);
+      // subject.next({
+      //   op: WebSocketOpCode.Reidentify,
+      //   d: {
+      //     eventSubscriptions: 1 << 7,
+      //   },
+      // });
+      // TODO: use di
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(connectCommandId, () => {
+      const serverConfig: WebSocketSubjectConfig<Message> = {
+        url: `ws://${obs_ws_address}`,
+        closeObserver: observer,
+      };
+      const subject = webSocket(serverConfig);
       // vscode.window.showInformationMessage(`connecting`);
       subject.subscribe({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        next: async (msg: any) => {
-          if (msg.op === 0) {
+        next: async (msg: Message) => {
+          if (msg.op === WebSocketOpCode.Hello) {
             vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
             const password = await keychain?.getPassword(extensionKey, obs_ws_address);
             subject.next(genIdentifyMessage(msg, EventSubscription.Outputs, `${password}`));
           }
-          if (msg.op === 2) {
+          if (msg.op === WebSocketOpCode.Identified) {
             // console.log(msg);
             vscode.window.showInformationMessage(`连接OBS成功，可以开始正常操作了。`);
           }
-          if (msg.op === 5) {
+          if (msg.op === WebSocketOpCode.Event) {
             vscode.window.showInformationMessage(
               `event no.${msg.d.eventIntent} : ${msg.d.eventType}`
             );
