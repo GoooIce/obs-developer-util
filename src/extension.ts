@@ -16,6 +16,8 @@ import { Observable, Subscriber } from 'rxjs';
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
 const reidentifyCommandId = `${extensionKey}.reidentify`;
+const recordCommandId = `${extensionKey}.record`;
+const stopRecordCommandId = `${extensionKey}.stopRecord`;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -75,21 +77,28 @@ export async function activate(context: vscode.ExtensionContext) {
     const peacock_config = vscode.workspace.getConfiguration('peacock');
     let i = 1;
     const color$ = new Observable((subscriber: Subscriber<string>) => {
-      setTimeout(() => {
-        if (4 > i) subscriber.complete();
-        subscriber.next(i % 2 == 1 ? '#42b883' : '#f00');
+      setInterval(() => {
+        if (4 <= i) subscriber.complete();
+        if (1 == i) {
+          subscriber.next('#dd0531');
+        }
+        if (2 == i) {
+          subscriber.next('#f9e64f');
+        }
+        if (3 == i) {
+          subscriber.next('#007fff');
+        }
         i++;
-      }, 10000);
+      }, 1000);
     });
 
     color$.subscribe({
       next(color) {
-        console.log(color);
-
         peacock_config.update('color', color);
       },
       complete() {
-        // vscode.commands.executeCommand('peacock.resetWorkspaceColors');
+        vscode.commands.executeCommand('peacock.resetWorkspaceColors');
+        vscode.commands.executeCommand(recordCommandId);
       },
       error(err) {
         vscode.window.showErrorMessage(err);
@@ -106,6 +115,18 @@ export async function activate(context: vscode.ExtensionContext) {
       //   },
       // });
       // TODO: use di
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(recordCommandId, () => {
+      console.log('send msg to obs, will start record');
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(stopRecordCommandId, () => {
+      console.log('send msg to obs, will stop record');
     })
   );
 
