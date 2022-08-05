@@ -83,6 +83,31 @@
         "command": "OBS-DeveloperUtil.connect",
         "title": "connect obs",
         "category": "OBS Commands"
+      },
+      {
+        "command": "OBS-DeveloperUtil.reidentify",
+        "title": "reidentify obs",
+        "category": "OBS Commands"
+      },
+      {
+        "command": "OBS-DeveloperUtil.startRecord",
+        "title": "obs start record",
+        "category": "OBS Commands"
+      },
+      {
+        "command": "OBS-DeveloperUtil.startRecordWithVideo",
+        "title": "obs start record with video",
+        "category": "OBS Commands"
+      },
+      {
+        "command": "OBS-DeveloperUtil.stopRecord",
+        "title": "obs stop record",
+        "category": "OBS Commands"
+      },
+      {
+        "command": "OBS-DeveloperUtil.stopRecordWithVideo",
+        "title": "obs stop record with video",
+        "category": "OBS Commands"
       }
     ],
     "statusBarItems": [

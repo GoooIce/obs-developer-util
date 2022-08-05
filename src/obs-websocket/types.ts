@@ -348,7 +348,7 @@ export type RequestMessage<T = keyof OBSRequestTypes> = T extends keyof OBSReque
   ? {
       requestType: T;
       requestId: string;
-      requestData: OBSRequestTypes[T];
+      requestData?: OBSRequestTypes[T];
     }
   : never;
 
