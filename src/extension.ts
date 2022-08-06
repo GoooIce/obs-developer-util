@@ -9,9 +9,10 @@ import {
   EventSubscription,
   WebSocketOpCode,
   WebSocketCloseCode,
+  // OBSEventTypes,
   Message,
 } from './obs-websocket/types';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, Observer, Subscriber } from 'rxjs';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -31,6 +32,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // create a new status bar item that we can now manage
   const myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   let subject: WebSocketSubject<Message>;
+  const videoProgress$ = new Observable<number>();
+  // let videoProgressSub: Subscriber<number>;
+  let videoProgressObserver: Observer<number>;
 
   if (typeof global !== 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,7 +116,7 @@ export async function activate(context: vscode.ExtensionContext) {
       // vscode.extensions.getExtension();
       // vscode.env.
       // vscode.commands.registerTextEditorCommand
-      vscode.window.setStatusBarMessage('正在播放片头');
+      vscode.window.setStatusBarMessage('正在播放片头', 1000);
 
       // subject.next({
       //   op: WebSocketOpCode.Reidentify,
@@ -155,14 +159,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(recordWithVideoCommandId, () => {
+      // event no.256 : MediaInputPlaybackEnded
+      // get scene item msg
       console.log('send msg to obs, will start record with video');
 
       console.log(
         'context: ',
-        context.extension.id,
+        // context.extension.id,
         // env_identified,
         context.workspaceState.get('isConnected')
       );
+
+      vscode.window.setStatusBarMessage('is connected', 1000);
     })
   );
 
@@ -187,22 +195,78 @@ export async function activate(context: vscode.ExtensionContext) {
           if (WebSocketOpCode.Hello === msg.op) {
             vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
             const password = await keychain?.getPassword(extensionKey, obs_ws_address);
-            subject.next(genIdentifyMessage(msg, EventSubscription.Outputs, `${password}`));
+            subject.next(genIdentifyMessage(msg, EventSubscription.MediaInputs, `${password}`));
           }
           if (WebSocketOpCode.Identified === msg.op) {
-            vscode.window.showInformationMessage(`连接OBS成功，可以开始正常操作了。`);
+            vscode.window.showInformationMessage(`连接OBS成功,可以开始正常操作了。`);
             context.workspaceState.update('isConnected', true);
             // vscode.commands.executeCommand('setContext', 'OBS-DeveloperUtil.env_identified', true);
           }
           if (WebSocketOpCode.Event === msg.op) {
+            let data;
+            const eventType = msg.d.eventType;
+            if (eventType === 'MediaInputPlaybackStarted') {
+              // start process with anim
+              subject.next({
+                op: WebSocketOpCode.Request,
+                d: {
+                  requestId: 'GetMediaInputStatus',
+                  requestType: 'GetMediaInputStatus',
+                  requestData: {
+                    inputName: 'mov',
+                  },
+                },
+              });
+
+              vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Window, title: 'OBS Playing Video' },
+                (progress, token) => {
+                  token.onCancellationRequested(() => {
+                    console.log('User canceled the long running operation');
+                  });
+
+                  videoProgressObserver = {
+                    next(value) {
+                      progress.report({ increment: value });
+                    },
+                    error(err) {
+                      console.log(err);
+                    },
+                    complete() {
+                      console.log('video complete');
+                    },
+                  };
+
+                  videoProgress$.subscribe(videoProgressObserver);
+
+                  progress.report({ increment: 0 });
+
+                  const p = new Promise<void>((resolve) => {
+                    // TODO: how to use this
+                    resolve();
+                  });
+
+                  return p;
+                }
+              );
+            }
+
+            if (eventType === 'MediaInputPlaybackEnded') {
+              data = msg.d.eventData;
+            }
+
             vscode.window.showInformationMessage(
-              `event no.${msg.d.eventIntent} : ${msg.d.eventType}`
+              `event no.${msg.d.eventIntent} : ${msg.d.eventType} : ${data?.inputName}`
             );
           }
           if (WebSocketOpCode.RequestResponse === msg.op) {
-            console.log(`${msg.d.requestStatus}  + ${msg.d.requestType}`);
+            console.log(`${msg.d.requestStatus}  + ${msg.d.requestType} + ${msg.d.responseData}`);
             if (msg.d.requestType === 'SetSceneItemEnabled') {
               vscode.window.showInformationMessage('playing video');
+            }
+
+            if (msg.d.requestType === 'GetMediaInputStatus') {
+              videoProgressObserver.next(10);
             }
 
             // switch (msg.d.requestType) {

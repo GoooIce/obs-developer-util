@@ -30,7 +30,7 @@ export function genIdentifyMessage(
     op: WebSocketOpCode.Identify,
     d: {
       rpcVersion: 1,
-      eventSubscriptions: 0,
+      eventSubscriptions: env,
     },
   };
   if (msg.d.authentication !== undefined)
