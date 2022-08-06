@@ -70,6 +70,7 @@ export async function activate(context: vscode.ExtensionContext) {
         },
         complete() {
           reject();
+          context.workspaceState.update('videoProgress', -1);
           subject.next({
             op: WebSocketOpCode.Request,
             d: {
@@ -274,7 +275,7 @@ export async function activate(context: vscode.ExtensionContext) {
                   },
                 },
               });
-              if (!videoProgressState)
+              if (videoProgressState === -1)
                 vscode.window.withProgress(
                   { location: vscode.ProgressLocation.Window, title: 'OBS Playing Video' },
                   videoProgressFun
