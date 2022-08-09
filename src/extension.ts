@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
 import { keychain } from './keychain';
+import { tipWithColors } from './tipWithColors';
 import { genIdentifyMessage } from './obs-websocket/util';
 import {
   EventSubscription,
@@ -12,11 +13,13 @@ import {
   // OBSEventTypes,
   Message,
 } from './obs-websocket/types';
-import { Observable, Observer, Subject, Subscriber } from 'rxjs';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { filter, Observable, Observer, Subject, Subscriber } from 'rxjs';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
 const reidentifyCommandId = `${extensionKey}.reidentify`;
+const tipWithColorsCommandID = `${extensionKey}.tipWithColors`;
 const recordCommandId = `${extensionKey}.startRecord`;
 const recordWithVideoCommandId = `${extensionKey}.startRecordWithVideo`;
 const stopRecordCommandId = `${extensionKey}.stopRecord`;
@@ -32,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // create a new status bar item that we can now manage
   const myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   context.workspaceState.update('videoProgress', -1);
+  context.workspaceState.update('isConnected', false);
   let subject: WebSocketSubject<Message>;
   const videoProgress$ = new Subject<number>();
 
@@ -132,40 +136,11 @@ export async function activate(context: vscode.ExtensionContext) {
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand(`${extensionKey}.tipWithColors`, async () => {
+  const disposable = vscode.commands.registerCommand(tipWithColorsCommandID, async () => {
     // The code you place here will be executed every time your command is executed
     // Display a message box to the user
-    vscode.window.showInformationMessage('Hello World from obs-developer-util!');
-    const peacock_config = vscode.workspace.getConfiguration('peacock');
-    let i = 1;
-    const color$ = new Observable((subscriber: Subscriber<string>) => {
-      setInterval(() => {
-        if (4 <= i) subscriber.complete();
-        if (1 == i) {
-          subscriber.next('#dd0531');
-        }
-        if (2 == i) {
-          subscriber.next('#f9e64f');
-        }
-        if (3 == i) {
-          subscriber.next('#007fff');
-        }
-        i++;
-      }, 1000);
-    });
-
-    color$.subscribe({
-      next(color) {
-        peacock_config.update('color', color);
-      },
-      complete() {
-        vscode.commands.executeCommand('peacock.resetWorkspaceColors');
-        vscode.commands.executeCommand(recordCommandId);
-      },
-      error(err) {
-        vscode.window.showErrorMessage(err);
-      },
-    });
+    // vscode.window.showInformationMessage('Hello World from obs-developer-util!');
+    tipWithColors();
   });
 
   context.subscriptions.push(
@@ -239,6 +214,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(connectCommandId, () => {
+      if (context.workspaceState.get('isConnected')) {
+        return tipWithColors(() => {
+          return vscode.commands.executeCommand(recordCommandId);
+        });
+      }
       const config = vscode.workspace.getConfiguration(extensionKey);
       const obs_ws_address = config.get<string>('address', 'localhost:4455');
       const serverConfig: WebSocketSubjectConfig<Message> = {
@@ -247,8 +227,11 @@ export async function activate(context: vscode.ExtensionContext) {
       };
       subject = webSocket(serverConfig);
       // vscode.window.showInformationMessage(`connecting`);
-      subject.subscribe({
-        next: async (msg: Message) => {
+      const beforeIdentify$ = subject.pipe(
+        filter<Message>((msg) => msg.op < WebSocketOpCode.Reidentify)
+      );
+      beforeIdentify$.subscribe({
+        next: async (msg) => {
           if (WebSocketOpCode.Hello === msg.op) {
             vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
             const password = await keychain?.getPassword(extensionKey, obs_ws_address);
@@ -257,8 +240,18 @@ export async function activate(context: vscode.ExtensionContext) {
           if (WebSocketOpCode.Identified === msg.op) {
             vscode.window.showInformationMessage(`连接OBS成功,可以开始正常操作了。`);
             context.workspaceState.update('isConnected', true);
+            myStatusBarItem.text = `$(circle-large-outline) OBS-Record`;
             // vscode.commands.executeCommand('setContext', 'OBS-DeveloperUtil.env_identified', true);
           }
+        }, // Called whenever there is a message from the server.
+        error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
+        complete: () => {
+          vscode.window.showInformationMessage('链接结束');
+        }, // Called when connection is closed (for whatever reason).
+      });
+      // Rewrite with operator
+      subject.subscribe({
+        next: async (msg: Message) => {
           if (WebSocketOpCode.Event === msg.op) {
             let data;
             const eventType = msg.d.eventType;
