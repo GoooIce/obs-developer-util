@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
 import { keychain } from './keychain';
-import { tipWithColors } from './tipWithColors';
+import { tipWithColors$ } from './tipWithColors';
 import { genIdentifyMessage } from './obs-websocket/util';
 import {
   EventSubscription,
@@ -14,7 +14,7 @@ import {
   Message,
 } from './obs-websocket/types';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { filter, Observable, Observer, Subject, Subscriber } from 'rxjs';
+import { filter, Observable, Observer, Subject, Subscriber, timer } from 'rxjs';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -140,7 +140,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // The code you place here will be executed every time your command is executed
     // Display a message box to the user
     // vscode.window.showInformationMessage('Hello World from obs-developer-util!');
-    tipWithColors();
+    tipWithColors$.subscribe();
   });
 
   context.subscriptions.push(
@@ -215,8 +215,12 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(connectCommandId, () => {
       if (context.workspaceState.get('isConnected')) {
-        return tipWithColors(() => {
-          return vscode.commands.executeCommand(recordCommandId);
+        return tipWithColors$.subscribe({
+          complete: () => {
+            timer(1200).subscribe({
+              complete: () => vscode.commands.executeCommand(recordCommandId),
+            });
+          },
         });
       }
       const config = vscode.workspace.getConfiguration(extensionKey);
