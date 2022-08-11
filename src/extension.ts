@@ -14,7 +14,7 @@ import {
   Message,
 } from './obs-websocket/types';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { filter, Observable, Observer, Subject, Subscriber, timer } from 'rxjs';
+import { delay, delayWhen, filter, Observable, Observer, Subject, Subscriber, timer } from 'rxjs';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -216,11 +216,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(connectCommandId, () => {
       if (context.workspaceState.get('isConnected')) {
         return tipWithColors$.subscribe({
-          complete: () => {
-            timer(1200).subscribe({
-              complete: () => vscode.commands.executeCommand(recordCommandId),
-            });
-          },
+          complete: () => vscode.commands.executeCommand(recordCommandId),
         });
       }
       const config = vscode.workspace.getConfiguration(extensionKey);
@@ -237,15 +233,13 @@ export async function activate(context: vscode.ExtensionContext) {
       beforeIdentify$.subscribe({
         next: async (msg) => {
           if (WebSocketOpCode.Hello === msg.op) {
-            vscode.window.showInformationMessage(`${msg.d.obsWebSocketVersion} with op ${msg.op}`);
             const password = await keychain?.getPassword(extensionKey, obs_ws_address);
             subject.next(genIdentifyMessage(msg, EventSubscription.MediaInputs, `${password}`));
           }
           if (WebSocketOpCode.Identified === msg.op) {
-            vscode.window.showInformationMessage(`连接OBS成功,可以开始正常操作了。`);
             context.workspaceState.update('isConnected', true);
-            myStatusBarItem.text = `$(circle-large-outline) OBS-Record`;
-            // vscode.commands.executeCommand('setContext', 'OBS-DeveloperUtil.env_identified', true);
+            // TODO: 根据询问录制状态，设置bar item状态 stop-circle
+            myStatusBarItem.text = `$(circle-filled) OBS-Record`;
           }
         }, // Called whenever there is a message from the server.
         error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
@@ -311,15 +305,6 @@ export async function activate(context: vscode.ExtensionContext) {
               if (videoProgressState <= videoState)
                 videoProgress$.next(videoState - videoProgressState);
             }
-
-            // switch (msg.d.requestType) {
-            //   case RequestStatus.:
-
-            //     break;
-
-            //   default:
-            //     break;
-            // }
           }
         }, // Called whenever there is a message from the server.
         error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
