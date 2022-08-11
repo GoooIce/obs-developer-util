@@ -57,7 +57,7 @@ function ganOBSRequest<T extends keyof OBSRequestTypes>(
     requestId: _uuid,
     requestType: requestType,
     requestData: requestData,
-  };
+  } as RequestMessage;
   OBS_WS_subject$.next({
     op: WebSocketOpCode.Request,
     d: requestD,
