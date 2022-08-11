@@ -11,12 +11,10 @@ import {
   EventSubscription,
   WebSocketOpCode,
   WebSocketCloseCode,
-  // OBSEventTypes,
   Message,
   EventMessage,
   OBSEventTypes,
   ResponseMessage,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   OBSResponseTypes,
   OBSRequestTypes,
   RequestMessage,
@@ -57,12 +55,14 @@ function ganOBSRequest<T extends keyof OBSRequestTypes>(
     requestId: _uuid,
     requestType: requestType,
     requestData: requestData,
-  } as RequestMessage;
+  } as RequestMessage<T>;
   OBS_WS_subject$.next({
     op: WebSocketOpCode.Request,
     d: requestD,
   });
-  return responseMessage$.pipe(filter((msg) => msg.requestId === _uuid));
+  return responseMessage$.pipe(
+    filter((msg) => msg.requestId === _uuid && msg.requestType === requestType)
+  );
 }
 export async function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
@@ -81,6 +81,17 @@ export async function activate(context: vscode.ExtensionContext) {
   // vscode observable
   const videoProgress$ = new Subject<number>();
   let videoProgressObserver: Observer<number>;
+
+  const statusBarItem$ = new Subject<string>();
+  statusBarItem$
+    .pipe(
+      tap({
+        next(value) {
+          myStatusBarItem.text = value;
+        },
+      })
+    )
+    .subscribe();
 
   const videoProgressFun = (
     progress: { report: (arg0: { increment: number; message?: string }) => void },
@@ -102,6 +113,32 @@ export async function activate(context: vscode.ExtensionContext) {
             .pipe(
               tap(() => {
                 // async newMethodName(op,d,requestId,requestType,requestData,inputName,filter)
+                ganOBSRequest<'GetMediaInputStatus'>(
+                  OBS_WS_subject$,
+                  responseMessage$,
+                  'GetMediaInputStatus',
+                  {
+                    inputName: 'mov',
+                  }
+                ).subscribe({
+                  next(msg) {
+                    const responseData: OBSResponseTypes['GetMediaInputStatus'] =
+                      msg.responseData as OBSResponseTypes['GetMediaInputStatus'];
+                    const mediaCursor = responseData.mediaCursor;
+                    const mediaDuration = responseData.mediaDuration;
+                    const videoState = ~~((mediaCursor / mediaDuration) * 100);
+                    // console.log(mediaCursor, ' : ', mediaDuration, ', ', videoState);
+
+                    const videoProgressState =
+                      context.workspaceState.get<number>('videoProgress') || 0;
+
+                    if (videoProgressState === -1)
+                      context.workspaceState.update('videoProgress', videoState);
+
+                    if (videoProgressState <= videoState)
+                      videoProgress$.next(videoState - videoProgressState);
+                  },
+                });
               })
             )
             .subscribe();
@@ -263,10 +300,7 @@ export async function activate(context: vscode.ExtensionContext) {
         closeObserver: observer,
       };
       OBS_WS_subject$ = webSocket(serverConfig);
-      // vscode.window.showInformationMessage(`connecting`);
-      // const beforeIdentify$ = subject.pipe(
-      //   filter<Message>((msg) => msg.op < WebSocketOpCode.Reidentify)
-      // );
+
       /** Observable WebSocketOpCode.Hello */
       const helloWebSocketOp$ = OBS_WS_subject$.pipe(
         filter((msg) => msg.op === WebSocketOpCode.Hello)
@@ -297,7 +331,6 @@ export async function activate(context: vscode.ExtensionContext) {
       ) as Observable<EventMessage>;
 
       // eventType === MediaInputPlaybackStarted
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const eventMediaInputPlaybackStarted$ = eventWebsocketOp$.pipe(
         filter((d) => d.eventType === 'MediaInputPlaybackStarted'),
         map((d) => d.eventData)
@@ -317,7 +350,6 @@ export async function activate(context: vscode.ExtensionContext) {
       });
 
       // eventType === MediaInputPlaybackEnded
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       eventMediaInputPlaybackEnded$ = eventWebsocketOp$.pipe(
         filter((msg) => msg.eventType === 'MediaInputPlaybackEnded'),
         map((msg) => msg.eventData)
@@ -330,7 +362,6 @@ export async function activate(context: vscode.ExtensionContext) {
       });
 
       /** Observable WebSocketOpCode.RequestResponse */
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       responseMessage$ = OBS_WS_subject$.pipe(
         filter((msg) => msg.op === WebSocketOpCode.RequestResponse),
         map((msg) => msg.d)
@@ -342,10 +373,16 @@ export async function activate(context: vscode.ExtensionContext) {
       // ) as Observable<OBSResponseTypes['GetMediaInputStatus']>;
 
       // requestType === SetSceneItemEnabled
-      // const setSceneItemEnabled$ = responseMessage$.pipe(
-      //   filter((msg) => msg.requestType === 'SetSceneItemEnabled'),
-      //   map((msg) => msg.responseData)
-      // ) as Observable<OBSResponseTypes['SetSceneItemEnabled']>;
+      const setSceneItemEnabled$ = responseMessage$.pipe(
+        filter((msg) => msg.requestType === 'SetSceneItemEnabled'),
+        map((msg) => msg.responseData)
+      ) as Observable<OBSResponseTypes['SetSceneItemEnabled']>;
+
+      setSceneItemEnabled$.subscribe({
+        next() {
+          vscode.window.showInformationMessage('playing video');
+        },
+      });
 
       // Rewrite with operator
       OBS_WS_subject$.subscribe({
@@ -354,24 +391,6 @@ export async function activate(context: vscode.ExtensionContext) {
             console.log(
               `${msg.d.requestStatus.code}  + ${msg.d.requestType} + ${msg.d.responseData}`
             );
-            if (msg.d.requestType === 'SetSceneItemEnabled') {
-              vscode.window.showInformationMessage('playing video');
-            }
-
-            if (msg.d.requestType === 'GetMediaInputStatus') {
-              const mediaCursor = msg.d.responseData.mediaCursor;
-              const mediaDuration = msg.d.responseData.mediaDuration;
-              const videoState = ~~((mediaCursor / mediaDuration) * 100);
-              console.log(mediaCursor, ' : ', mediaDuration, ', ', videoState);
-
-              const videoProgressState = context.workspaceState.get<number>('videoProgress') || 0;
-
-              if (videoProgressState === -1)
-                context.workspaceState.update('videoProgress', videoState);
-
-              if (videoProgressState <= videoState)
-                videoProgress$.next(videoState - videoProgressState);
-            }
           }
         }, // Called whenever there is a message from the server.
         error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
@@ -387,7 +406,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable);
 
-  myStatusBarItem.text = `$(eye)connect obs`;
+  myStatusBarItem.text = `$(eye) OBS: Connect`;
   myStatusBarItem.show();
 
   // return { subject_next: (value: Message) => subject.next(value) };
