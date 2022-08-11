@@ -333,7 +333,7 @@ export interface MessageTypes {
   [WebSocketOpCode.Request]: RequestMessage;
 }
 
-type EventMessage<T = keyof OBSEventTypes> = T extends keyof OBSEventTypes
+export type EventMessage<T = keyof OBSEventTypes> = T extends keyof OBSEventTypes
   ? {
       eventType: T;
       /**

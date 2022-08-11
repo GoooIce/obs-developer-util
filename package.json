@@ -138,6 +138,7 @@
     "@types/keytar": "^4.4.2",
     "@types/mocha": "^9.1.1",
     "@types/node": "16.11.36",
+    "@types/uuid": "^8.3.4",
     "@types/vscode": "^1.67.0",
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
@@ -158,6 +159,7 @@
   "dependencies": {
     "rxjs": "^7.5.5",
     "type-fest": "^2.17.0",
+    "uuid": "^8.3.2",
     "ws": "^8.7.0"
   }
 }
