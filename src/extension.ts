@@ -112,26 +112,33 @@ export async function activate(context: vscode.ExtensionContext) {
     next: (e: CloseEvent) => {
       const obs_ws_address = config.get<string>('address', 'localhost:4455');
       if (WebSocketCloseCode.AuthenticationFailed === e.code) {
-        vscode.window.showInputBox().then(async (input_value) => {
-          await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
-          vscode.window.showInformationMessage(`retry connecting`);
-          vscode.commands.executeCommand(connectCommandId);
-        });
+        vscode.window
+          .showInputBox({ placeHolder: 'password', title: 'OBS WebSocket Password' })
+          .then(async (input_value) => {
+            await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
+            vscode.window.showInformationMessage(`retry connecting`);
+            vscode.commands.executeCommand(connectCommandId);
+          });
       }
       if (WebSocketCloseCode.CantConnect === e.code) {
         vscode.window
           .showWarningMessage(
-            `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](http://miantu.net)`,
+            `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
             '修改地址'
           )
           .then(() => {
-            vscode.window.showInputBox().then(async (input_value) => {
-              config.update('address', input_value);
-              vscode.commands.executeCommand(connectCommandId);
-            });
+            vscode.window
+              .showInputBox({ placeHolder: 'localhost:4455', title: 'OBS WebSocket Address' })
+              .then(async (input_value) => {
+                config.update('address', input_value);
+                vscode.commands.executeCommand(connectCommandId);
+              });
           });
       } else {
-        vscode.window.showErrorMessage(`${e.code} + ${e.reason}, [帮助](http://miantu.net)`);
+        vscode.window.showErrorMessage(
+          `${e.code} + ${e.reason}, [帮助](https://github.com/GoooIce/obs-developer-util/issues)`
+        );
+        statusBarItem$.next();
       }
     },
     error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
@@ -302,6 +309,8 @@ export async function activate(context: vscode.ExtensionContext) {
         error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
         complete: () => {
           vscode.window.showInformationMessage('链接结束');
+          context.workspaceState.update('isConnected', false);
+          context.workspaceState.update('isRecording', false);
         }, // Called when connection is closed (for whatever reason).
       });
     })
