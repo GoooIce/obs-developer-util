@@ -16,7 +16,7 @@ module.exports = {
     'plugin:prettier/recommended',
   ],
   rules: {
-    'prettier/prettier': 'error',
+    'prettier/prettier': ['error', { endOfLine: 'auto' }],
     // too many tests to fix, disable for now
     '@typescript-eslint/ban-types': 'off',
     // customize argument ignore pattern
