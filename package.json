@@ -1,26 +1,33 @@
 {
   "name": "obs-developer-util",
   "displayName": "OBS-DeveloperUtil",
+  "icon": "images/icon.png",
   "description": "use vscode drive obs.",
+  "keywords": [
+    "obs"
+  ],
   "author": {
     "name": "GoooIce",
     "url": "https://github.com/GoooIce"
   },
   "publisher": "goooice",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "https://github.com/GoooIce/obs-developer-util.git"
   },
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.67.0"
   },
   "categories": [
     "Other"
   ],
+  "extensionKind": [
+    "ui"
+  ],
   "activationEvents": [
-    "*"
+    "workspaceContains:*"
   ],
   "main": "./out/src/extension.js",
   "contributes": {
