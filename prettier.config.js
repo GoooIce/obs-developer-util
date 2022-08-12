@@ -11,5 +11,5 @@ module.exports = {
       },
     },
   ],
-  error: { endOfline: 'auto' },
+  endOfline: 'auto',
 };
