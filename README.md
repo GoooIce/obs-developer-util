@@ -1,5 +1,7 @@
 # obs-developer-util README
 
+[![.github/workflows/main.yml](https://github.com/GoooIce/obs-developer-util/actions/workflows/main.yml/badge.svg)](https://github.com/GoooIce/obs-developer-util/actions/workflows/main.yml)
+
 使用 VSCode 连接并控制 OBS 录像。
 
 ## Features
