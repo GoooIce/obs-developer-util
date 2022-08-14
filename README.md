@@ -32,6 +32,10 @@ Calling out known issues can help limit users opening duplicate issues against y
 
 ## Pre-Release Notes
 
+### 0.1.15
+
+Fix bugs
+
 ### 0.1.14
 
 Initial release of record feature
