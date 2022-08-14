@@ -1,8 +1,19 @@
-# obs-developer-util README
+# OBS-DeveloperUtil README
 
 [![.github/workflows/main.yml](https://github.com/GoooIce/obs-developer-util/actions/workflows/main.yml/badge.svg)](https://github.com/GoooIce/obs-developer-util/actions/workflows/main.yml)
 
 使用 VSCode 连接并控制 OBS 录像。
+
+开始录制前 VSCode 通过变换 3 次边框颜色提示(依赖 peacock 插件实现)，颜色清零时开始录制。
+
+OBS 插件依赖：
+[obs-websocket](https://github.com/obsproject/obs-websocket) 5.0+
+
+VSC 插件依赖：
+[johnpapa.vscode-peacock](https://marketplace.visualstudio.com/items?itemName=johnpapa.vscode-peacock)
+
+插件安装：
+插件市场搜索[OBS-DeveloperUtil](https://marketplace.visualstudio.com/items?itemName=GoooIce.obs-developer-util)
 
 ## Features
 
@@ -19,9 +30,9 @@ This extension contributes the following settings:
 
 Calling out known issues can help limit users opening duplicate issues against your extension.
 
-## Release Notes
+## Pre-Release Notes
 
-### 0.1.7
+### 0.1.14
 
 Initial release of record feature
 
