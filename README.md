@@ -17,7 +17,7 @@ VSC 插件依赖：
 
 ## Features
 
-\!\[tip with record\]\(images/feature-x.png\) Features Media Show Coming Soon....
+[B 站视频演示](https://www.bilibili.com/video/bv1eB4y167Uq)
 
 ## Extension Settings
 

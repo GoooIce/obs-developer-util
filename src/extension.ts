@@ -47,11 +47,14 @@ const stopRecordCommandId = `${extensionKey}.stopRecord`;
 /**gan obs request and give back an observable response */
 function ganOBSRequest<T extends keyof OBSRequestTypes>(
   OBS_WS_subject$: WebSocketSubject<Message>,
-  responseMessage$: Observable<ResponseMessage>,
   requestType: T,
   requestData?: OBSRequestTypes[T]
 ): Observable<ResponseMessage<T>> {
   const _uuid = uuid.v1();
+  const responseMessage$ = OBS_WS_subject$.pipe(
+    filter((msg) => msg.op === WebSocketOpCode.RequestResponse),
+    map((msg) => msg.d)
+  ) as Observable<ResponseMessage>;
   const requestD: RequestMessage = {
     requestId: _uuid,
     requestType: requestType,
@@ -81,7 +84,6 @@ export async function activate(context: vscode.ExtensionContext) {
   context.workspaceState.update('isRecording', false);
   // OBS Websocket rxjs var
   let OBS_WS_subject$: WebSocketSubject<Message>;
-  let responseMessage$: Observable<ResponseMessage>;
   // let eventMediaInputPlaybackEnded$: Observable<OBSEventTypes['MediaInputPlaybackEnded']>;
 
   // vscode observable
@@ -153,7 +155,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(recordCommandId, () => {
       if (!context.workspaceState.get('isRecording')) {
-        ganOBSRequest<'StartRecord'>(OBS_WS_subject$, responseMessage$, 'StartRecord').subscribe({
+        ganOBSRequest<'StartRecord'>(OBS_WS_subject$, 'StartRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', true);
@@ -168,7 +170,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(stopRecordCommandId, () => {
       if (context.workspaceState.get('isRecording'))
-        ganOBSRequest<'StopRecord'>(OBS_WS_subject$, responseMessage$, 'StopRecord').subscribe({
+        ganOBSRequest<'StopRecord'>(OBS_WS_subject$, 'StopRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', false);
@@ -225,11 +227,7 @@ export async function activate(context: vscode.ExtensionContext) {
           context.workspaceState.update('isConnected', true);
           statusBarItem$.next();
           // request record status
-          ganOBSRequest<'GetRecordStatus'>(
-            OBS_WS_subject$,
-            responseMessage$,
-            'GetRecordStatus'
-          ).subscribe({
+          ganOBSRequest<'GetRecordStatus'>(OBS_WS_subject$, 'GetRecordStatus').subscribe({
             next(msg) {
               if (msg.requestStatus) {
                 context.workspaceState.update('isRecording', msg.responseData.outputActive);
@@ -274,10 +272,7 @@ export async function activate(context: vscode.ExtensionContext) {
       // });
 
       /** Observable WebSocketOpCode.RequestResponse */
-      responseMessage$ = OBS_WS_subject$.pipe(
-        filter((msg) => msg.op === WebSocketOpCode.RequestResponse),
-        map((msg) => msg.d)
-      ) as Observable<ResponseMessage>;
+
       // requestType === GetMediaInputStatus
       // const getMediaInputStatusResponse$ = responseMessage$.pipe(
       //   filter((msg) => msg.requestType === 'GetMediaInputStatus'),
