@@ -5,6 +5,8 @@ const languages = {
 
 const StatusBarAlignment = { Left: 1, Right: 2 };
 
+const ViewColumn = { One: 1, Two: 2 };
+
 const window = {
   createStatusBarItem: jest.fn(() => ({
     show: jest.fn(),
@@ -14,6 +16,7 @@ const window = {
   showWarningMessage: jest.fn(),
   createTextEditorDecorationType: jest.fn(),
   createOutputChannel: jest.fn(),
+  createWebviewPanel: jest.fn(),
   showWorkspaceFolderPick: jest.fn(),
   onDidChangeActiveTextEditor: jest.fn(),
   showInformationMessage: jest.fn(),
@@ -93,6 +96,7 @@ export = {
   CodeLens,
   languages,
   StatusBarAlignment,
+  ViewColumn,
   window,
   workspace,
   OverviewRulerLane,
