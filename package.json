@@ -179,6 +179,7 @@
     "vsce": "^2.10.0"
   },
   "dependencies": {
+    "@lottiefiles/lottie-player": "^1.5.7",
     "rxjs": "^7.5.5",
     "type-fest": "^2.17.0",
     "uuid": "^8.3.2",
