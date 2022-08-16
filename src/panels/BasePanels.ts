@@ -44,6 +44,14 @@ export class BasePanel {
       'toolkit.js',
     ]);
     const mainUri = getUri(webview, extensionUri, ['src', 'webview-ui', 'main.js']);
+    const lottieUri = getUri(webview, extensionUri, [
+      'node_modules',
+      '@lottiefiles',
+      'lottie-player',
+      'dist',
+      'lottie-player.js',
+    ]);
+    const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
     return /*html*/ `
       <!DOCTYPE html>
       <html lang="en">
@@ -51,12 +59,22 @@ export class BasePanel {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width,initial-scale=1.0">
           <script type="module" src="${toolkitUri}"></script>
+          <script type="module" src="${lottieUri}"></script>
           <script type="module" src="${mainUri}"></script>
           <title>Hello World!</title>
         </head>
         <body>
           <h1>Hello World!</h1>
           <vscode-button id="howdy">Howdy!</vscode-button>
+          <lottie-player
+            loop
+            controls
+            autoplay
+            mode="normal"
+            src="${clapperboard_1}"
+            style="width: 320px"
+          >
+          </lottie-player>
         </body>
       </html>
     `;
