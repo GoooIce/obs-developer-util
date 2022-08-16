@@ -94,8 +94,13 @@
     ],
     "commands": [
       {
+        "command": "OBS-DeveloperUtil.tipWithPanel",
+        "title": "Before record tip panel message use lottie",
+        "category": "OBS Commands"
+      },
+      {
         "command": "OBS-DeveloperUtil.tipWithColors",
-        "title": "Before record tip 3s color message use peacock",
+        "title": "Before record tip color message use peacock",
         "category": "OBS Commands"
       },
       {

@@ -16,7 +16,12 @@ const window = {
   showWarningMessage: jest.fn(),
   createTextEditorDecorationType: jest.fn(),
   createOutputChannel: jest.fn(),
-  createWebviewPanel: jest.fn(),
+  createWebviewPanel: jest.fn().mockReturnValue({
+    onDidDispose: jest.fn(),
+    dispose: jest.fn(),
+    reveal: jest.fn(),
+    webview: { asWebviewUri: jest.fn() },
+  }),
   showWorkspaceFolderPick: jest.fn(),
   onDidChangeActiveTextEditor: jest.fn(),
   showInformationMessage: jest.fn(),

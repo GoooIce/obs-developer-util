@@ -32,11 +32,13 @@ import {
   // tap,
   // timer,
 } from 'rxjs';
+import { BasePanel } from './panels/BasePanels';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
 // const reidentifyCommandId = `${extensionKey}.reidentify`;
 const tipWithColorsCommandID = `${extensionKey}.tipWithColors`;
+const tipWithPanelCommandID = `${extensionKey}.tipWithPanel`;
 const recordCommandId = `${extensionKey}.startRecord`;
 // TODO v2
 // const recordWithVideoCommandId = `${extensionKey}.startRecordWithVideo`;
@@ -146,6 +148,12 @@ export async function activate(context: vscode.ExtensionContext) {
     error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
     complete: () => console.log('Observer got a complete notification'),
   };
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(tipWithPanelCommandID, () => {
+      BasePanel.render(context.extensionUri);
+    })
+  );
 
   /**tip with colors used peacock command */
   const disposable = vscode.commands.registerCommand(tipWithColorsCommandID, async () => {
