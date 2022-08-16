@@ -20,7 +20,7 @@ const window = {
     onDidDispose: jest.fn(),
     dispose: jest.fn(),
     reveal: jest.fn(),
-    webview: { asWebviewUri: jest.fn() },
+    webview: { asWebviewUri: jest.fn(), onDidReceiveMessage: jest.fn() },
   }),
   showWorkspaceFolderPick: jest.fn(),
   onDidChangeActiveTextEditor: jest.fn(),
