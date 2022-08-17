@@ -5,6 +5,7 @@ module.exports = {
     node: true,
     'jest/globals': true,
   },
+  ignorePatterns: ['webview-ui'],
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'jest', 'prettier'],
   extends: [

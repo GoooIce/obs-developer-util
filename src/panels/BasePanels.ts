@@ -14,19 +14,21 @@ export class BasePanel {
     this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
 
     this._panel.onDidDispose(this.dispose, null, this._disposables);
-    this._setWebviewMessageListener(this._panel.webview);
+    this._setWebviewMessageListener(this._panel.webview, extensionUri);
   }
 
-  private _setWebviewMessageListener(webview: vscode.Webview) {
+  private _setWebviewMessageListener(webview: vscode.Webview, extensionUri: vscode.Uri) {
+    const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
     webview.onDidReceiveMessage(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (message: any) => {
         const command = message.command;
-        const text = message.text;
+        // const text = message.text;
 
         switch (command) {
           case 'hello':
-            vscode.window.showInformationMessage(text);
+            // vscode.window.showInformationMessage(text);
+            webview.postMessage({ command: 'lottie', uri: clapperboard_1 });
             return;
         }
       },
@@ -43,7 +45,7 @@ export class BasePanel {
       'dist',
       'toolkit.js',
     ]);
-    const mainUri = getUri(webview, extensionUri, ['src', 'webview-ui', 'main.js']);
+    const mainUri = getUri(webview, extensionUri, ['webview-ui', 'main.js']);
     const lottieUri = getUri(webview, extensionUri, [
       'node_modules',
       '@lottiefiles',
@@ -51,7 +53,9 @@ export class BasePanel {
       'dist',
       'lottie-player.js',
     ]);
-    const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
+    // const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
+    // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} sha256-SycxdxQ2BxUxdxtxCHqGt00ATy3JXSz+X3sPlsXoM8s=; script-src ${webview.cspSource} ;">
+    //src = '${clapperboard_1}';
     return /*html*/ `
       <!DOCTYPE html>
       <html lang="en">
@@ -64,17 +68,23 @@ export class BasePanel {
           <title>Hello World!</title>
         </head>
         <body>
-          <h1>Hello World!</h1>
+          <h1>放松动作练习</h1>
+          <vscode-option>高能量呼吸</vscode-option>
+          <p>嘿哈练习</p>
+          <p>解放天性</p>
+          <h2>我很兴奋，我很兴奋，我很兴奋</h2>
+          <h1>跟你有关，你会喜欢</h1>
+          <p>聚光灯要先关闭</p><p>唤醒高光的记忆</p><p>注入能量深呼吸</p><p>嘿哈挤压紧张离</p>
           <vscode-button id="howdy">Howdy!</vscode-button>
           <lottie-player
             loop
             controls
             autoplay
             mode="normal"
-            src="${clapperboard_1}"
             style="width: 320px"
           >
           </lottie-player>
+          <h1 id="lines-of-code-counter">0</h1>
         </body>
       </html>
     `;
