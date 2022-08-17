@@ -143,6 +143,9 @@
     ]
   },
   "scripts": {
+    "install:all": "yarn && yarn --cwd ./webview-ui",
+    "dev:webview": "yarn --cwd ./webview-ui dev",
+    "build:webview": "yarn --cwd ./webview-ui build",
     "vscode:prepublish": "yarn run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
@@ -181,6 +184,7 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
     "typescript": "^4.6.4",
+    "vite": "^3.0.8",
     "vsce": "^2.10.0"
   },
   "dependencies": {
