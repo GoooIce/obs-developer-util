@@ -9,6 +9,8 @@ export default defineConfig({
     }),
   ],
   root: './webview-ui',
+  publicDir: 'assets',
+  assetsInclude: ['**/*.json'],
   build: {
     outDir: '../out',
     rollupOptions: {

@@ -4,6 +4,10 @@ export function getUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathLi
   return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
 }
 
+function uriToUrl(uri: vscode.Uri) {
+  return `${uri.scheme}://${uri.authority}${uri.path}`;
+}
+
 export class BasePanel {
   public static currentPanel: BasePanel | undefined;
   private readonly _panel: vscode.WebviewPanel;
@@ -18,7 +22,7 @@ export class BasePanel {
   }
 
   private _setWebviewMessageListener(webview: vscode.Webview, extensionUri: vscode.Uri) {
-    const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
+    const clapperboard_1 = getUri(webview, extensionUri, ['out', 'lottie', 'timer-2.json']);
     webview.onDidReceiveMessage(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (message: any) => {
@@ -28,7 +32,10 @@ export class BasePanel {
         switch (command) {
           case 'hello':
             // vscode.window.showInformationMessage('text');
-            webview.postMessage({ command: 'lottie', uri: clapperboard_1 });
+            webview.postMessage({ command: 'lottie', message: uriToUrl(clapperboard_1) });
+            return;
+          case 'player-complete':
+            vscode.window.showInformationMessage('complete');
             return;
         }
       },
@@ -38,6 +45,7 @@ export class BasePanel {
   }
 
   private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
+    const baseUri = getUri(webview, extensionUri, ['out']);
     const toolkitUri = getUri(webview, extensionUri, [
       'node_modules',
       '@vscode',
@@ -46,13 +54,13 @@ export class BasePanel {
       'toolkit.js',
     ]);
     const mainUri = getUri(webview, extensionUri, ['out', 'webview-ui', 'index.js']);
-    // const lottieUri = getUri(webview, extensionUri, [
-    //   'node_modules',
-    //   '@lottiefiles',
-    //   'lottie-player',
-    //   'dist',
-    //   'lottie-player.js',
-    // ]);
+    const lottieUri = getUri(webview, extensionUri, [
+      'node_modules',
+      '@lottiefiles',
+      'lottie-player',
+      'dist',
+      'lottie-player.js',
+    ]);
     // const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
     // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} sha256-SycxdxQ2BxUxdxtxCHqGt00ATy3JXSz+X3sPlsXoM8s=; script-src ${webview.cspSource} ;">
     //src = '${clapperboard_1}';
@@ -63,10 +71,12 @@ export class BasePanel {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width,initial-scale=1.0">
           <script type="module" src="${toolkitUri}"></script>
+          <script type="module" src="${lottieUri}"></script>
           <script type="module" src="${mainUri}"></script>
           <title>Hello World!</title>
         </head>
         <body>
+          <input data=${baseUri} hidden/>
           <h1>放松动作练习</h1>
           <vscode-option>高能量呼吸</vscode-option>
           <p>嘿哈练习</p>
@@ -76,14 +86,11 @@ export class BasePanel {
           <p>聚光灯要先关闭</p><p>唤醒高光的记忆</p><p>注入能量深呼吸</p><p>嘿哈挤压紧张离</p>
           <vscode-button id="howdy">Howdy!</vscode-button>
           <lottie-player
-            loop
-            controls
             autoplay
             mode="normal"
             style="width: 320px"
           >
           </lottie-player>
-          <h1 id="lines-of-code-counter">0</h1>
         </body>
       </html>
     `;
