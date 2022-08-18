@@ -61,6 +61,7 @@ export class BasePanel {
       'dist',
       'lottie-player.js',
     ]);
+    //
     // const clapperboard_1 = getUri(webview, extensionUri, ['lottie', 'clapperboard-1.json']);
     // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} sha256-SycxdxQ2BxUxdxtxCHqGt00ATy3JXSz+X3sPlsXoM8s=; script-src ${webview.cspSource} ;">
     //src = '${clapperboard_1}';
@@ -71,7 +72,7 @@ export class BasePanel {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width,initial-scale=1.0">
           <script type="module" src="${toolkitUri}"></script>
-          <script type="module" src="${lottieUri}"></script>
+          <script type="module" src="${lottieUri}"></script>;
           <script type="module" src="${mainUri}"></script>
           <title>Hello World!</title>
         </head>

@@ -1,12 +1,12 @@
 import { vscode } from './vscode';
 import { fromEvent, filter, map } from 'rxjs';
-// import { LottiePlayer } from '@lottiefiles/lottie-player';
+import { LottiePlayer } from '@lottiefiles/lottie-player';
 
 interface EventMessage {
   data: { command: string; message: any };
 }
 
-const player = document.querySelector('lottie-player') as any;
+const player = document.querySelector('lottie-player') as LottiePlayer;
 // const oldState = vscode.getState();
 fromEvent<EventMessage>(window, 'message')
   .pipe(
@@ -30,7 +30,7 @@ if (button)
   });
 
 if (player)
-  fromEvent(player as Element, 'complete').subscribe({
+  fromEvent(player, 'complete').subscribe({
     next: (e: Event) => {
       vscode.postMessage({ command: 'player-complete' });
     },
