@@ -8,7 +8,7 @@ import { TestScheduler } from 'rxjs/testing';
 vscode.workspace.getConfiguration = jest.fn().mockImplementation((section) => {
   return {
     get: jest.fn().mockImplementation((key) => 'mock_value'),
-    update: jest.fn().mockImplementation(() => console.log('mock_update')),
+    update: jest.fn().mockImplementation(() => 'mock_update'),
   };
 });
 

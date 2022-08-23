@@ -33,6 +33,7 @@ import {
   // timer,
 } from 'rxjs';
 import { BasePanel } from './panels/BasePanels';
+import { onDidChangeTerminalState } from './terminalRecord';
 
 const extensionKey = 'OBS-DeveloperUtil';
 const connectCommandId = `${extensionKey}.connect`;
@@ -243,6 +244,8 @@ export async function activate(context: vscode.ExtensionContext) {
               }
             },
           });
+
+          onDidChangeTerminalState(context, OBS_WS_subject$);
         },
       });
 
