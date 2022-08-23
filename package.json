@@ -56,6 +56,11 @@
             "type": "boolean",
             "default": false,
             "description": "If active, this extension will try to automatically connect to the OBS Websocket endpoint"
+          },
+          "OBS-DeveloperUtil.cleanTerminal": {
+            "type": "boolean",
+            "default": false,
+            "description": "OBS Terminal would be clean"
           }
         }
       }

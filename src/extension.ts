@@ -1,7 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as uuid from 'uuid';
 import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
 import { keychain } from './keychain';
@@ -12,18 +11,11 @@ import {
   WebSocketOpCode,
   WebSocketCloseCode,
   Message,
-  // EventMessage,
-  // OBSEventTypes,
-  ResponseMessage,
-  // OBSResponseTypes,
-  OBSRequestTypes,
-  RequestMessage,
 } from './obs-websocket/types';
 import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   delay,
   filter,
-  map,
   Observable,
   // Observer,
   Subject,
@@ -34,43 +26,15 @@ import {
 } from 'rxjs';
 import { BasePanel } from './panels/BasePanels';
 import { onDidChangeTerminalState } from './terminalRecord';
-
-const extensionKey = 'OBS-DeveloperUtil';
-const connectCommandId = `${extensionKey}.connect`;
-// const reidentifyCommandId = `${extensionKey}.reidentify`;
-const tipWithColorsCommandID = `${extensionKey}.tipWithColors`;
-const tipWithPanelCommandID = `${extensionKey}.tipWithPanel`;
-const recordCommandId = `${extensionKey}.startRecord`;
-// TODO v2
-// const recordWithVideoCommandId = `${extensionKey}.startRecordWithVideo`;
-const stopRecordCommandId = `${extensionKey}.stopRecord`;
-// TODO v2
-// const stopRecordWithVideoCommandId = `${extensionKey}.stopRecordWithVideo`;
-
-/**gan obs request and give back an observable response */
-function ganOBSRequest<T extends keyof OBSRequestTypes>(
-  OBS_WS_subject$: WebSocketSubject<Message>,
-  requestType: T,
-  requestData?: OBSRequestTypes[T]
-): Observable<ResponseMessage<T>> {
-  const _uuid = uuid.v1();
-  const responseMessage$ = OBS_WS_subject$.pipe(
-    filter((msg) => msg.op === WebSocketOpCode.RequestResponse),
-    map((msg) => msg.d)
-  ) as Observable<ResponseMessage>;
-  const requestD: RequestMessage = {
-    requestId: _uuid,
-    requestType: requestType,
-    requestData: requestData,
-  } as RequestMessage<T>;
-  OBS_WS_subject$.next({
-    op: WebSocketOpCode.Request,
-    d: requestD,
-  });
-  return responseMessage$.pipe(
-    filter((msg) => msg.requestType === requestType && msg.requestId === _uuid)
-  ) as unknown as Observable<ResponseMessage<T>>;
-}
+import {
+  extensionKey,
+  connectCommandId,
+  tipWithPanelCommandID,
+  tipWithColorsCommandID,
+  recordCommandId,
+  stopRecordCommandId,
+} from './enum';
+import { ganOBSRequest } from './obs-websocket/ganOBSRequest';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
