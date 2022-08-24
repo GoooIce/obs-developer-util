@@ -22,4 +22,4 @@ const tipWithThreeColors$ = interval(1000).pipe(
   tap({ next: (value) => _peacock_color(colorArr[value]) })
 );
 
-export const tipWithColors$ = merge(tipWithThreeColors$, resetWorkspaceColors$, timer(4020));
+export const tipWithColors$ = merge(tipWithThreeColors$, resetWorkspaceColors$, timer(4050));

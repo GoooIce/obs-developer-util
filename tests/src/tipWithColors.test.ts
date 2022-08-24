@@ -22,7 +22,7 @@ describe('tipWithColors', () => {
 
   it('tipWithColors$', () => {
     testScheduler.run(({ expectObservable }) => {
-      const colors = '1000ms a 999ms b 999ms c 999ms d 19ms (e|)';
+      const colors = '1000ms a 999ms b 999ms c 999ms d 49ms (e|)';
       const values = { a: 0, b: 1, c: 2, d: 0, e: 0 };
 
       expectObservable(tipWithColors$).toBe(colors, values);

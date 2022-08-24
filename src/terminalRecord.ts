@@ -6,6 +6,9 @@ import { Message } from './obs-websocket/types';
 import { ganOBSRequest } from './obs-websocket/ganOBSRequest';
 import { extensionKey } from './enum';
 
+const terminalSceneName = 'Terminal';
+const desktopSceneName = 'Desktop';
+
 export function onDidChangeTerminalState(
   context: vscode.ExtensionContext,
   obs: WebSocketSubject<Message>
@@ -13,15 +16,33 @@ export function onDidChangeTerminalState(
   ganOBSRequest<'GetSceneList'>(obs, 'GetSceneList').subscribe({
     next(msg) {
       msg.responseData.scenes.forEach((value) => {
-        if (value['sceneName'] === 'Terminal') {
+        if (value['sceneName'] === terminalSceneName) {
           createObsTerminal();
-          vscode.window.onDidChangeTerminalState((e) => {
-            console.log(e);
-            // SetCurrentProgramScene
-            ganOBSRequest<'SetCurrentProgramScene'>(obs, 'SetCurrentProgramScene', {
-              sceneName: 'Terminal',
-            });
-          });
+
+          // eslint-disable-next-line no-inner-declarations
+          function changeScene<T>(sceneName: string) {
+            return (_e: T): void => {
+              const currObsSceneName = context.workspaceState.get('obs-scene');
+              if (currObsSceneName === sceneName) return;
+              ganOBSRequest<'SetCurrentProgramScene'>(obs, 'SetCurrentProgramScene', {
+                sceneName: sceneName,
+              }).subscribe({
+                next: () => {
+                  context.workspaceState.update('obs-scene', sceneName);
+                },
+              });
+            };
+          }
+
+          const editorChange = changeScene(desktopSceneName);
+          vscode.window.onDidChangeActiveTextEditor(editorChange);
+          vscode.window.onDidChangeTextEditorSelection(editorChange);
+          vscode.window.onDidCloseTerminal(editorChange);
+
+          const terminalChange = changeScene(terminalSceneName);
+          vscode.window.onDidChangeActiveTerminal(terminalChange);
+          vscode.window.onDidOpenTerminal(terminalChange);
+          vscode.window.onDidChangeTerminalState(terminalChange);
         }
       });
     },
