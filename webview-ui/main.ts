@@ -21,13 +21,13 @@ fromEvent<EventMessage>(window, 'message')
       if (player) player.load(msg);
     },
   });
-const button = document.querySelector('vscode-button');
-if (button)
-  fromEvent(button, 'click').subscribe({
-    next: (e: Event) => {
-      vscode.postMessage({ command: 'hello', text: 'test' + e.type });
-    },
-  });
+// const button = document.querySelector('vscode-button');
+// if (button)
+//   fromEvent(button, 'click').subscribe({
+//     next: (e: Event) => {
+//       vscode.postMessage({ command: 'hello', text: 'test' + e.type });
+//     },
+//   });
 
 if (player)
   fromEvent(player, 'complete').subscribe({
@@ -35,3 +35,9 @@ if (player)
       vscode.postMessage({ command: 'player-complete' });
     },
   });
+
+fromEvent(window, 'onload').subscribe({
+  next: () => {
+    vscode.postMessage({ command: 'hello', text: 'webUi-loaded' });
+  },
+});

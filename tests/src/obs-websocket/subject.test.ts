@@ -25,16 +25,16 @@ describe('subject', () => {
   });
 
   it('onOpen singleton', () => {
-    let turnObject = true;
+    let foo = true;
     const obs = OBSSubject.getSubject();
     const obs_ext = OBSSubject.getSubject();
     obs_ext.onOpen$.subscribe({
       next: () => {
-        turnObject = false;
+        foo = false;
       },
     });
     obs.onOpen$.next();
 
-    expect(turnObject).toBeFalsy();
+    expect(foo).toBeFalsy();
   });
 });
