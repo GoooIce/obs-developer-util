@@ -95,6 +95,11 @@ describe('subject', () => {
 
     // ws.connected;
     ws.send(helloOpMsgWithAuth);
+    expect(ws).toReceiveMessage(identifyOpMsgWithAuth);
+  });
+
+  it('identified', () => {
+    const obs = OBSSubject.getSubject();
     expect(obs.identified).toBeFalsy();
     ws.send({
       op: WebSocketOpCode.Identified,
