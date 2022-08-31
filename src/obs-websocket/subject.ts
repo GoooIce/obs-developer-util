@@ -15,15 +15,25 @@ type OBSWebSocketSubjectConfig = WebSocketSubjectConfig<Message>;
 
 export class OBSSubject implements OnWebSocketLife {
   private static obs_subject: OBSSubject;
+
+  /**When obs-websocket server hello op message include auth message,
+   * onAuth$ Subscription will be run. Then {@link password$}.next(string)
+   * send a password to server.
+   */
   onAuth$: Subject<void>;
+  /**used by obs.{@link onAuth$}.subscribe({next: () => obs.password$.next('password')})
+   * send password to obs-websocket server
+   */
+  password$: Subject<string>;
+
   onOpen$: Subject<void>;
   onClose$: Subject<void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onError$: Subject<any>;
   onComplete$: Subject<void>;
-  password$: Subject<string>;
-  identified: boolean;
+
   onIdentified$: Subject<boolean>;
+
   private readonly _ws_subject$: OBSWebSocketSubject;
   // private _config: WebSocketSubjectConfig<Message>;
 
@@ -39,7 +49,6 @@ export class OBSSubject implements OnWebSocketLife {
     this.onComplete$ = new Subject();
     this.onIdentified$ = new Subject();
     this.password$ = new Subject();
-    this.identified = false;
     this._ws_subject$ = webSocket(config);
 
     const onAuth$ = this.onAuth$;

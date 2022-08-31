@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { recordCommandId } from '../enum';
+import { recordCommandId, extensionKey } from '../enum';
 
 export function getUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathList: string[]) {
   return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
@@ -65,7 +65,7 @@ export class BasePanel {
       'lottie-player.js',
     ]);
     //
-    const clapperboard_1 = getUri(webview, extensionUri, ['out', 'lottie', 'timer-2.json']);
+    const timer = getUri(webview, extensionUri, ['out', 'lottie', 'timer-2.json']);
     // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} sha256-SycxdxQ2BxUxdxtxCHqGt00ATy3JXSz+X3sPlsXoM8s=; script-src ${webview.cspSource} ;">
     //src = '${clapperboard_1}';
     return /*html*/ `
@@ -83,7 +83,7 @@ export class BasePanel {
           <input data=${baseUri} hidden/>
           <lottie-player
             autoplay
-            src = '${clapperboard_1}'
+            src = '${timer}'
             mode="normal"
             style="width: 320px"
           >
@@ -99,7 +99,7 @@ export class BasePanel {
     } else {
       const panel = vscode.window.createWebviewPanel(
         'basePanel',
-        'BasePanel',
+        extensionKey,
         vscode.ViewColumn.Two,
         { enableScripts: true }
       );
