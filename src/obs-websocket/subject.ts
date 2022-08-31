@@ -23,6 +23,7 @@ export class OBSSubject implements OnWebSocketLife {
   onComplete$: Subject<void>;
   password$: Subject<string>;
   identified: boolean;
+  onIdentified$: Subject<boolean>;
   private readonly _ws_subject$: OBSWebSocketSubject;
   // private _config: WebSocketSubjectConfig<Message>;
 
@@ -36,6 +37,7 @@ export class OBSSubject implements OnWebSocketLife {
     this.onAuth$ = new Subject();
     this.onError$ = new Subject();
     this.onComplete$ = new Subject();
+    this.onIdentified$ = new Subject();
     this.password$ = new Subject();
     this.identified = false;
     this._ws_subject$ = webSocket(config);
@@ -43,14 +45,11 @@ export class OBSSubject implements OnWebSocketLife {
     const onAuth$ = this.onAuth$;
     const password$ = this.password$;
 
-    this._ws_subject$
-      .pipe(
-        filter((msg) => msg.op === WebSocketOpCode.Identified),
-        tap(() => {
-          this.identified = true;
-        })
-      )
-      .subscribe();
+    this._ws_subject$.pipe(filter((msg) => msg.op === WebSocketOpCode.Identified)).subscribe({
+      next: () => {
+        this.onIdentified$.next(true);
+      },
+    });
 
     const identify$ = this._ws_subject$.pipe(
       filter((msg) => msg.op === WebSocketOpCode.Hello)

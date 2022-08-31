@@ -3,6 +3,7 @@ jest.unmock('../../../src/obs-websocket/subject');
 jest.unmock('../../../src/obs-websocket/util');
 jest.unmock('jest-websocket-mock');
 import WS from 'jest-websocket-mock';
+import { firstValueFrom } from 'rxjs';
 import { OBSSubject } from '../../../src/obs-websocket/subject';
 import { Message, WebSocketOpCode } from '../../../src/obs-websocket/types';
 // import { TestScheduler } from 'rxjs/testing';
@@ -99,14 +100,25 @@ describe('subject', () => {
   });
 
   it('identified', () => {
-    const obs = OBSSubject.getSubject();
-    expect(obs.identified).toBeFalsy();
-    ws.send({
-      op: WebSocketOpCode.Identified,
-      d: {
-        negotiatedRpcVersion: 1,
-      },
+    return new Promise<void>((done) => {
+      let foo = false;
+      const obs = OBSSubject.getSubject();
+      obs.onIdentified$.subscribe({
+        next: (value) => {
+          foo = value;
+          expect(foo).toBeTruthy();
+          done();
+        },
+      });
+      expect(foo).toBeFalsy();
+      ws.send({
+        op: WebSocketOpCode.Identified,
+        d: {
+          negotiatedRpcVersion: 1,
+        },
+      });
+
+      return firstValueFrom(obs.onIdentified$);
     });
-    expect(obs.identified).toBeTruthy();
   });
 });
