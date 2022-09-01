@@ -14,7 +14,7 @@ type OBSWebSocketSubject = WebSocketSubject<Message>;
 type OBSWebSocketSubjectConfig = WebSocketSubjectConfig<Message>;
 
 export class OBSSubject implements OnWebSocketLife {
-  private static obs_subject: OBSSubject;
+  private static obs_subject: OBSSubject | undefined;
 
   /**When obs-websocket server hello op message include auth message,
    * onAuth$ Subscription will be run. Then {@link password$}.next(string)
@@ -71,7 +71,7 @@ export class OBSSubject implements OnWebSocketLife {
         onAuth$.next();
         password$.subscribe({
           next(password) {
-            OBSSubject.obs_subject._ws_subject$.next(
+            OBSSubject.obs_subject?._ws_subject$.next(
               genIdentifyMessage(msg, EventSubscription.All, password)
             );
           },
@@ -82,7 +82,7 @@ export class OBSSubject implements OnWebSocketLife {
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({
       next(msg) {
-        OBSSubject.obs_subject._ws_subject$.next(
+        OBSSubject.obs_subject?._ws_subject$.next(
           genIdentifyMessage(msg, EventSubscription.All, '')
         );
       },
@@ -103,6 +103,8 @@ export class OBSSubject implements OnWebSocketLife {
 
   public static getSubject(config?: OBSWebSocketSubjectConfig) {
     if (this.obs_subject) return this.obs_subject;
+    // used to test
+    if (config?.url === 'ws://not-real:1234') return new this(config);
     if (undefined === config) {
       config = {
         url: 'ws://localhost:4455',
@@ -110,5 +112,16 @@ export class OBSSubject implements OnWebSocketLife {
     }
     this.obs_subject = new this(config);
     return this.obs_subject;
+  }
+
+  public static unsubscribe() {
+    this.obs_subject?.onAuth$.unsubscribe();
+    this.obs_subject?.onIdentified$.unsubscribe();
+    this.obs_subject?.password$.unsubscribe();
+    this.obs_subject?.onClose$.unsubscribe();
+    this.obs_subject?.onComplete$.unsubscribe();
+    this.obs_subject?.onError$.unsubscribe();
+    this.obs_subject?._ws_subject$.unsubscribe();
+    OBSSubject.obs_subject = undefined;
   }
 }

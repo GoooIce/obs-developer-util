@@ -4,6 +4,8 @@ export const connectCommandId = `${extensionKey}.connect`;
 export const tipWithColorsCommandID = `${extensionKey}.tipWithColors`;
 export const tipWithPanelCommandID = `${extensionKey}.tipWithPanel`;
 export const recordCommandId = `${extensionKey}.startRecord`;
+export const pauseRecordCommandId = `${extensionKey}.pauseRecord`;
+export const resumeRecordCommandId = `${extensionKey}.resumeRecord`;
 // TODO v2
 // const recordWithVideoCommandId = `${extensionKey}.startRecordWithVideo`;
 export const stopRecordCommandId = `${extensionKey}.stopRecord`;

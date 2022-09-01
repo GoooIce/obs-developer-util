@@ -151,7 +151,7 @@
     "build:webview-ui": "yarn vite build",
     "build:emptyWebview-ui": "yarn vite build --emptyOutDir",
     "vscode:prepublish": "yarn run compile",
-    "compile": "yarn run build:webview-ui && tsc -p ./",
+    "compile": "yarn run build:emptyWebview-ui && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest:e2e": "yarn run compile && yarn run lint",
     "pretest": "yarn run compile && yarn run lint",
