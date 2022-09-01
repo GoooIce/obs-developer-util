@@ -37,9 +37,11 @@ export class OBSSubject implements OnWebSocketLife {
   private readonly _ws_subject$: OBSWebSocketSubject;
   // private _config: WebSocketSubjectConfig<Message>;
 
-  public next(msg: Message) {
+  private _next(msg: Message) {
     this._ws_subject$.next(msg);
   }
+
+  private _needAuth(msg: Message) {}
 
   private constructor(config: OBSWebSocketSubjectConfig) {
     this.onClose$ = new Subject();
@@ -71,9 +73,7 @@ export class OBSSubject implements OnWebSocketLife {
         onAuth$.next();
         password$.subscribe({
           next(password) {
-            OBSSubject.obs_subject?._ws_subject$.next(
-              genIdentifyMessage(msg, EventSubscription.All, password)
-            );
+            OBSSubject.obs_subject?._next(genIdentifyMessage(msg, EventSubscription.All, password));
           },
         });
       },
@@ -82,9 +82,7 @@ export class OBSSubject implements OnWebSocketLife {
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({
       next(msg) {
-        OBSSubject.obs_subject?._ws_subject$.next(
-          genIdentifyMessage(msg, EventSubscription.All, '')
-        );
+        OBSSubject.obs_subject?._next(genIdentifyMessage(msg, EventSubscription.All, ''));
       },
     });
 
@@ -103,8 +101,6 @@ export class OBSSubject implements OnWebSocketLife {
 
   public static getSubject(config?: OBSWebSocketSubjectConfig) {
     if (this.obs_subject) return this.obs_subject;
-    // used to test
-    if (config?.url === 'ws://not-real:1234') return new this(config);
     if (undefined === config) {
       config = {
         url: 'ws://localhost:4455',
