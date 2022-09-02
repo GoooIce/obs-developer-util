@@ -227,7 +227,11 @@ export async function activate(context: vscode.ExtensionContext) {
         }, // Called when connection is closed (for whatever reason).
       });
       obs.onError$.subscribe({
-        next: (err) => vscode.window.showInformationMessage(err),
+        next: (err) => {
+          vscode.window.showInformationMessage(err);
+          context.workspaceState.update('isConnected', false);
+          context.workspaceState.update('isRecording', false);
+        },
       });
     })
   );

@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // import * as uuid from 'uuid';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {
+  combineLatestWith,
   filter,
   forkJoin,
   lastValueFrom,
@@ -10,6 +12,7 @@ import {
   pipe,
   Subject,
   tap,
+  withLatestFrom,
 } from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
 import { ganOBSRequest } from './ganOBSRequest';
@@ -104,14 +107,20 @@ export class OBSSubject implements OnWebSocketLife {
 
     // identify$.subscribe();
     // need auth
-    const identifyOnAuth$ = identify$.pipe(
-      filter((msg) => needAuth(msg)),
-      tap(() => this.onAuth$.next())
-    );
+    // const identifyOnAuth$ =
+    identify$
+      .pipe(
+        filter((msg) => needAuth(msg)),
+        tap(() => this.onAuth$.next()),
+        combineLatestWith(this.password$)
+      )
+      .subscribe({
+        next: this._auth_with_password_observer_next,
+      });
 
-    forkJoin([lastValueFrom(identifyOnAuth$), this.password$]).subscribe({
-      next: this._auth_with_password_observer_next,
-    });
+    // forkJoin([lastValueFrom(identifyOnAuth$), this.password$]).subscribe({
+    //   next: this._auth_with_password_observer_next,
+    // });
 
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({
