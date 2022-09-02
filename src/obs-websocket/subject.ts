@@ -98,9 +98,12 @@ export class OBSSubject implements OnWebSocketLife {
       filter((msg) => needAuth(msg)),
       tap(() => this.onAuth$.next())
     );
+
     forkJoin([identifyOnAuth$, this.password$]).subscribe({
       next: this._auth_with_password_observer_next,
     });
+    identifyOnAuth$.subscribe();
+    this.password$.subscribe();
 
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({

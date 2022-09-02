@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
-// import { keychain } from './keychain';
+import { keychain } from './keychain';
 import { tipWithColors$ } from './tipWithColors';
 // import { genIdentifyMessage } from './obs-websocket/util';
 import {
@@ -51,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.workspaceState.update('isConnected', false);
   context.workspaceState.update('isRecording', false);
   // OBS Websocket rxjs var
-  let OBS_WS_subject$: OBSSubject;
+  let obs: OBSSubject;
   // let eventMediaInputPlaybackEnded$: Observable<OBSEventTypes['MediaInputPlaybackEnded']>;
 
   // vscode observable
@@ -129,7 +129,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(recordCommandId, () => {
       if (!context.workspaceState.get('isRecording')) {
-        OBS_WS_subject$._api('StartRecord').subscribe({
+        obs._api('StartRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', true);
@@ -144,7 +144,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(stopRecordCommandId, () => {
       if (context.workspaceState.get('isRecording'))
-        OBS_WS_subject$._api('StopRecord').subscribe({
+        obs._api('StopRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', false);
@@ -173,35 +173,39 @@ export async function activate(context: vscode.ExtensionContext) {
       const obs_ws_address = config.get<string>('address', 'localhost:4455');
       const serverConfig: WebSocketSubjectConfig<Message> = {
         url: `ws://${obs_ws_address}`,
-        // closeObserver: observer,
       };
-      OBS_WS_subject$ = OBSSubject.getSubject(serverConfig);
+      obs = OBSSubject.getSubject(serverConfig);
 
-      /** Observable WebSocketOpCode.Hello */
-      // const helloWebSocketOp$ = OBS_WS_subject$.pipe(
-      //   filter((msg) => msg.op === WebSocketOpCode.Hello)
-      // ) as Observable<Message<WebSocketOpCode.Hello>>;
+      obs.onAuth$.subscribe({
+        async next() {
+          const _save_password = (await keychain?.getPassword(extensionKey, obs_ws_address)) || '';
+          if ('' !== _save_password) return obs.password$.next(_save_password);
+          vscode.window
+            .showInputBox({ placeHolder: 'password', title: 'OBS WebSocket Password' })
+            .then(async (input_value) => {
+              if (input_value && '' !== input_value) {
+                await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
+                return obs.password$.next(input_value);
+              }
 
-      // helloWebSocketOp$.subscribe({
-      //   next: async (msg) => {
-      //     const password = await keychain?.getPassword(extensionKey, obs_ws_address);
-      //     OBS_WS_subject$.next(
-      //       genIdentifyMessage(msg, EventSubscription.MediaInputs, `${password}`)
-      //     );
-      //   },
-      // });
+              // if got empty input_value rerun subscribe.
+              obs.onAuth$.next();
+            });
+        },
+        complete() {
+          statusBarItem$.next();
+        },
+        error(err) {
+          console.log(err);
+        },
+      });
 
-      /** Observable WebSocketOpCode.Identified */
-      // const identifiedWebSocketOp$ = OBS_WS_subject$.pipe(
-      //   filter((msg) => msg.op === WebSocketOpCode.Identified)
-      // ) as Observable<Message<WebSocketOpCode.Identified>>;
-
-      OBS_WS_subject$.onIdentified$.subscribe({
+      obs.onIdentified$.subscribe({
         next() {
           context.workspaceState.update('isConnected', true);
           statusBarItem$.next();
           // request record status
-          OBS_WS_subject$.GetRecordStatus().subscribe({
+          obs.GetRecordStatus().subscribe({
             next(msg) {
               if (msg.requestStatus) {
                 context.workspaceState.update('isRecording', msg.responseData.outputActive);
@@ -214,82 +218,17 @@ export async function activate(context: vscode.ExtensionContext) {
         },
       });
 
-      /** Observable WebSocketOpCode.Event */
-      // const eventWebsocketOp$ = OBS_WS_subject$.pipe(
-      //   filter((msg) => msg.op === WebSocketOpCode.Event),
-      //   map((msg) => msg.d)
-      // ) as Observable<EventMessage>;
-
-      // eventType === MediaInputPlaybackStarted
-      // const eventMediaInputPlaybackStarted$ = eventWebsocketOp$.pipe(
-      //   filter((d) => d.eventType === 'MediaInputPlaybackStarted'),
-      //   map((d) => d.eventData)
-      // ) as Observable<OBSEventTypes['MediaInputPlaybackStarted']>;
-
-      // eventMediaInputPlaybackStarted$.subscribe({
-      //   next(event) {
-      //     // start process with anim
-      //     const videoProgressState = context.workspaceState.get<number>('videoProgress');
-
-      //     // if (videoProgressState === -1)
-      //   },
-      // });
-
-      // eventType === MediaInputPlaybackEnded
-      // eventMediaInputPlaybackEnded$ = eventWebsocketOp$.pipe(
-      //   filter((msg) => msg.eventType === 'MediaInputPlaybackEnded'),
-      //   map((msg) => msg.eventData)
-      // ) as Observable<OBSEventTypes['MediaInputPlaybackEnded']>;
-
-      // eventMediaInputPlaybackEnded$.subscribe({
-      //   next(event) {
-      //     if (event.inputName === 'mov') videoProgress$.complete();
-      //   },
-      // });
-
-      /** Observable WebSocketOpCode.RequestResponse */
-
-      // requestType === GetMediaInputStatus
-      // const getMediaInputStatusResponse$ = responseMessage$.pipe(
-      //   filter((msg) => msg.requestType === 'GetMediaInputStatus'),
-      //   map((msg) => msg.responseData)
-      // ) as Observable<OBSResponseTypes['GetMediaInputStatus']>;
-
-      // requestType === SetSceneItemEnabled
-      // const setSceneItemEnabled$ = responseMessage$.pipe(
-      //   filter((msg) => msg.requestType === 'SetSceneItemEnabled'),
-      //   map((msg) => msg.responseData)
-      // ) as Observable<OBSResponseTypes['SetSceneItemEnabled']>;
-
-      // setSceneItemEnabled$.subscribe({
-      //   next() {
-      //     vscode.window.showInformationMessage('playing video');
-      //   },
-      // });
-
       // Rewrite with operator
-      OBS_WS_subject$.onComplete$.subscribe({
+      obs.onComplete$.subscribe({
         next: () => {
           vscode.window.showInformationMessage('链接结束');
           context.workspaceState.update('isConnected', false);
           context.workspaceState.update('isRecording', false);
         }, // Called when connection is closed (for whatever reason).
       });
-      OBS_WS_subject$.onError$.subscribe({
+      obs.onError$.subscribe({
         next: (err) => vscode.window.showInformationMessage(err),
       });
-      // OBS_WS_subject$.subscribe({
-      //   next: async (msg: Message) => {
-      //     if (WebSocketOpCode.Hello === msg.op) {
-      //       console.log('hello');
-      //     }
-      //     if (WebSocketOpCode.RequestResponse === msg.op) {
-      //       console.log(`${msg.d.requestType} : result : ${msg.d.requestStatus.result}`);
-      //     }
-      //   }, // Called whenever there is a message from the server.
-      // error: // Called if at any point WebSocket API signals some kind of error.
-      // complete:
-      // });
     })
   );
 
