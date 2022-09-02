@@ -1,6 +1,16 @@
 // import * as uuid from 'uuid';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { filter, forkJoin, map, Observable, Observer, pipe, Subject, tap } from 'rxjs';
+import {
+  filter,
+  forkJoin,
+  lastValueFrom,
+  map,
+  Observable,
+  Observer,
+  pipe,
+  Subject,
+  tap,
+} from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
 import { ganOBSRequest } from './ganOBSRequest';
 
@@ -99,11 +109,9 @@ export class OBSSubject implements OnWebSocketLife {
       tap(() => this.onAuth$.next())
     );
 
-    forkJoin([identifyOnAuth$, this.password$]).subscribe({
+    forkJoin([lastValueFrom(identifyOnAuth$), this.password$]).subscribe({
       next: this._auth_with_password_observer_next,
     });
-    identifyOnAuth$.subscribe();
-    this.password$.subscribe();
 
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({
