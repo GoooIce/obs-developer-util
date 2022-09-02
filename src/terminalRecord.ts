@@ -1,19 +1,16 @@
 import * as vscode from 'vscode';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { count, filter, map, Observable, reduce, Subject, from } from 'rxjs';
-import { WebSocketSubject } from 'rxjs/webSocket';
-import { Message } from './obs-websocket/types';
-import { ganOBSRequest } from './obs-websocket/ganOBSRequest';
+
 import { extensionKey } from './enum';
+import { OBSSubject } from './obs-websocket/subject';
 
 const terminalSceneName = 'Terminal';
 const desktopSceneName = 'Desktop';
 
-export function onDidChangeTerminalState(
-  context: vscode.ExtensionContext,
-  obs: WebSocketSubject<Message>
-) {
-  ganOBSRequest<'GetSceneList'>(obs, 'GetSceneList').subscribe({
+export function onDidChangeTerminalState(context: vscode.ExtensionContext) {
+  const obs = OBSSubject.getSubject();
+  obs.GetSceneList().subscribe({
     next(msg) {
       msg.responseData.scenes.forEach((value) => {
         if (value['sceneName'] === terminalSceneName) {
@@ -24,9 +21,7 @@ export function onDidChangeTerminalState(
             return (_e: T): void => {
               const currObsSceneName = context.workspaceState.get('obs-scene');
               if (currObsSceneName === sceneName) return;
-              ganOBSRequest<'SetCurrentProgramScene'>(obs, 'SetCurrentProgramScene', {
-                sceneName: sceneName,
-              }).subscribe({
+              obs.SetCurrentProgramScene(sceneName).subscribe({
                 next: () => {
                   context.workspaceState.update('obs-scene', sceneName);
                 },

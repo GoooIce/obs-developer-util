@@ -1,23 +1,26 @@
 // import * as uuid from 'uuid';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { filter, forkJoin, map, Observable, Observer, Subject, tap } from 'rxjs';
+import { filter, forkJoin, map, Observable, Observer, pipe, Subject, tap } from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
 import { ganOBSRequest } from './ganOBSRequest';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {
+  EventMessage,
   EventSubscription,
   Message,
+  OBSEventTypes,
   OBSRequestTypes,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   RequestMessage,
   ResponseMessage,
+  WebSocketCloseCode,
   WebSocketOpCode,
 } from './types';
 import { needAuth, genAuthString } from './util';
 
 interface OnWebSocketLife {
   onOpen$: Subject<void>;
-  onClose$: Subject<void>;
+  onClose$: Subject<CloseEvent>;
 }
 
 type OBSWebSocketSubject = WebSocketSubject<Message>;
@@ -37,7 +40,7 @@ export class OBSSubject implements OnWebSocketLife {
   password$: Subject<string>;
 
   onOpen$: Subject<void>;
-  onClose$: Subject<void>;
+  onClose$: Subject<CloseEvent>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onError$: Subject<any>;
   onComplete$: Subject<void>;
@@ -53,6 +56,19 @@ export class OBSSubject implements OnWebSocketLife {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
   private _needAuth(msg: Message) {}
+
+  private _closeObserver = {
+    next: (e: CloseEvent) => {
+      if (WebSocketCloseCode.AuthenticationFailed === e.code) {
+        return this.onAuth$.error(e);
+      }
+      // if (WebSocketCloseCode.CantConnect === e.code) {
+      // }
+      this.onClose$.next(e);
+    },
+    error: (err: ErrorEvent) => this.onError$.next(err),
+    complete: () => console.log('Observer got a complete notification'),
+  };
 
   private constructor(config: OBSWebSocketSubjectConfig) {
     this.onClose$ = new Subject();
@@ -122,6 +138,7 @@ export class OBSSubject implements OnWebSocketLife {
     error: (err) => this.onError$.next(err), // Called if at any point WebSocket API signals some kind of error.
     complete: () => {
       this.onComplete$.next();
+      OBSSubject.unsubscribe();
     },
   };
 
@@ -132,6 +149,7 @@ export class OBSSubject implements OnWebSocketLife {
         url: 'ws://localhost:4455',
       };
     }
+
     this.obs_subject = new this(config);
     return this.obs_subject;
   }
@@ -147,6 +165,14 @@ export class OBSSubject implements OnWebSocketLife {
     OBSSubject.obs_subject = undefined;
   }
 
+  public fromEvent(eventType: keyof OBSEventTypes) {
+    const event$ = this._ws_subject$.pipe(
+      filter((msg) => WebSocketOpCode.Event === msg.op),
+      map((msg) => msg.d as EventMessage<typeof eventType>)
+    );
+    return event$.pipe(filter((msg) => msg.eventType === eventType));
+  }
+
   public _api(
     requestType: keyof OBSRequestTypes,
     requestData?: OBSRequestTypes[typeof requestType]
@@ -158,5 +184,15 @@ export class OBSSubject implements OnWebSocketLife {
     return this._api('GetRecordStatus') as unknown as Observable<
       ResponseMessage<'GetRecordStatus'>
     >;
+  }
+
+  public GetSceneList() {
+    return this._api('GetSceneList') as unknown as Observable<ResponseMessage<'GetSceneList'>>;
+  }
+
+  public SetCurrentProgramScene(sceneName: string) {
+    return this._api('SetCurrentProgramScene', {
+      sceneName: sceneName,
+    }) as unknown as Observable<ResponseMessage<'SetCurrentProgramScene'>>;
   }
 }

@@ -1,22 +1,22 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
+import { WebSocketSubjectConfig } from 'rxjs/webSocket';
 // import { retry } from 'rxjs';
-import { keychain } from './keychain';
+// import { keychain } from './keychain';
 import { tipWithColors$ } from './tipWithColors';
-import { genIdentifyMessage } from './obs-websocket/util';
+// import { genIdentifyMessage } from './obs-websocket/util';
 import {
-  EventSubscription,
-  WebSocketOpCode,
-  WebSocketCloseCode,
+  // EventSubscription,
+  // WebSocketOpCode,
+  // WebSocketCloseCode,
   Message,
 } from './obs-websocket/types';
 import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   delay,
-  filter,
-  Observable,
+  // filter,
+  // Observable,
   // Observer,
   Subject,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,7 +34,8 @@ import {
   recordCommandId,
   stopRecordCommandId,
 } from './enum';
-import { ganOBSRequest } from './obs-websocket/ganOBSRequest';
+// import { ganOBSRequest } from './obs-websocket/ganOBSRequest';
+import { OBSSubject } from './obs-websocket/subject';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -50,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.workspaceState.update('isConnected', false);
   context.workspaceState.update('isRecording', false);
   // OBS Websocket rxjs var
-  let OBS_WS_subject$: WebSocketSubject<Message>;
+  let OBS_WS_subject$: OBSSubject;
   // let eventMediaInputPlaybackEnded$: Observable<OBSEventTypes['MediaInputPlaybackEnded']>;
 
   // vscode observable
@@ -77,42 +78,42 @@ export async function activate(context: vscode.ExtensionContext) {
     (global as any).WebSocket = require('ws');
   }
 
-  const observer = {
-    next: (e: CloseEvent) => {
-      const obs_ws_address = config.get<string>('address', 'localhost:4455');
-      if (WebSocketCloseCode.AuthenticationFailed === e.code) {
-        vscode.window
-          .showInputBox({ placeHolder: 'password', title: 'OBS WebSocket Password' })
-          .then(async (input_value) => {
-            await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
-            vscode.window.showInformationMessage(`retry connecting`);
-            vscode.commands.executeCommand(connectCommandId);
-          });
-      }
-      if (WebSocketCloseCode.CantConnect === e.code) {
-        vscode.window
-          .showWarningMessage(
-            `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
-            '修改地址'
-          )
-          .then(() => {
-            vscode.window
-              .showInputBox({ placeHolder: 'localhost:4455', title: 'OBS WebSocket Address' })
-              .then(async (input_value) => {
-                config.update('address', input_value);
-                vscode.commands.executeCommand(connectCommandId);
-              });
-          });
-      } else {
-        vscode.window.showErrorMessage(
-          `${e.code} + ${e.reason}, [帮助](https://github.com/GoooIce/obs-developer-util/issues)`
-        );
-        statusBarItem$.next();
-      }
-    },
-    error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
-    complete: () => console.log('Observer got a complete notification'),
-  };
+  // const observer = {
+  //   next: (e: CloseEvent) => {
+  //     const obs_ws_address = config.get<string>('address', 'localhost:4455');
+  //     if (WebSocketCloseCode.AuthenticationFailed === e.code) {
+  //       vscode.window
+  //         .showInputBox({ placeHolder: 'password', title: 'OBS WebSocket Password' })
+  //         .then(async (input_value) => {
+  //           await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
+  //           vscode.window.showInformationMessage(`retry connecting`);
+  //           vscode.commands.executeCommand(connectCommandId);
+  //         });
+  //     }
+  //     if (WebSocketCloseCode.CantConnect === e.code) {
+  //       vscode.window
+  //         .showWarningMessage(
+  //           `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
+  //           '修改地址'
+  //         )
+  //         .then(() => {
+  //           vscode.window
+  //             .showInputBox({ placeHolder: 'localhost:4455', title: 'OBS WebSocket Address' })
+  //             .then(async (input_value) => {
+  //               config.update('address', input_value);
+  //               vscode.commands.executeCommand(connectCommandId);
+  //             });
+  //         });
+  //     } else {
+  //       vscode.window.showErrorMessage(
+  //         `${e.code} + ${e.reason}, [帮助](https://github.com/GoooIce/obs-developer-util/issues)`
+  //       );
+  //       statusBarItem$.next();
+  //     }
+  //   },
+  //   error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
+  //   complete: () => console.log('Observer got a complete notification'),
+  // };
 
   context.subscriptions.push(
     vscode.commands.registerCommand(tipWithPanelCommandID, () => {
@@ -128,7 +129,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(recordCommandId, () => {
       if (!context.workspaceState.get('isRecording')) {
-        ganOBSRequest<'StartRecord'>(OBS_WS_subject$, 'StartRecord').subscribe({
+        OBS_WS_subject$._api('StartRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', true);
@@ -143,7 +144,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(stopRecordCommandId, () => {
       if (context.workspaceState.get('isRecording'))
-        ganOBSRequest<'StopRecord'>(OBS_WS_subject$, 'StopRecord').subscribe({
+        OBS_WS_subject$._api('StopRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', false);
@@ -172,35 +173,35 @@ export async function activate(context: vscode.ExtensionContext) {
       const obs_ws_address = config.get<string>('address', 'localhost:4455');
       const serverConfig: WebSocketSubjectConfig<Message> = {
         url: `ws://${obs_ws_address}`,
-        closeObserver: observer,
+        // closeObserver: observer,
       };
-      OBS_WS_subject$ = webSocket(serverConfig);
+      OBS_WS_subject$ = OBSSubject.getSubject(serverConfig);
 
       /** Observable WebSocketOpCode.Hello */
-      const helloWebSocketOp$ = OBS_WS_subject$.pipe(
-        filter((msg) => msg.op === WebSocketOpCode.Hello)
-      ) as Observable<Message<WebSocketOpCode.Hello>>;
+      // const helloWebSocketOp$ = OBS_WS_subject$.pipe(
+      //   filter((msg) => msg.op === WebSocketOpCode.Hello)
+      // ) as Observable<Message<WebSocketOpCode.Hello>>;
 
-      helloWebSocketOp$.subscribe({
-        next: async (msg) => {
-          const password = await keychain?.getPassword(extensionKey, obs_ws_address);
-          OBS_WS_subject$.next(
-            genIdentifyMessage(msg, EventSubscription.MediaInputs, `${password}`)
-          );
-        },
-      });
+      // helloWebSocketOp$.subscribe({
+      //   next: async (msg) => {
+      //     const password = await keychain?.getPassword(extensionKey, obs_ws_address);
+      //     OBS_WS_subject$.next(
+      //       genIdentifyMessage(msg, EventSubscription.MediaInputs, `${password}`)
+      //     );
+      //   },
+      // });
 
       /** Observable WebSocketOpCode.Identified */
-      const identifiedWebSocketOp$ = OBS_WS_subject$.pipe(
-        filter((msg) => msg.op === WebSocketOpCode.Identified)
-      ) as Observable<Message<WebSocketOpCode.Identified>>;
+      // const identifiedWebSocketOp$ = OBS_WS_subject$.pipe(
+      //   filter((msg) => msg.op === WebSocketOpCode.Identified)
+      // ) as Observable<Message<WebSocketOpCode.Identified>>;
 
-      identifiedWebSocketOp$.subscribe({
+      OBS_WS_subject$.onIdentified$.subscribe({
         next() {
           context.workspaceState.update('isConnected', true);
           statusBarItem$.next();
           // request record status
-          ganOBSRequest<'GetRecordStatus'>(OBS_WS_subject$, 'GetRecordStatus').subscribe({
+          OBS_WS_subject$.GetRecordStatus().subscribe({
             next(msg) {
               if (msg.requestStatus) {
                 context.workspaceState.update('isRecording', msg.responseData.outputActive);
@@ -209,7 +210,7 @@ export async function activate(context: vscode.ExtensionContext) {
             },
           });
 
-          onDidChangeTerminalState(context, OBS_WS_subject$);
+          onDidChangeTerminalState(context);
         },
       });
 
@@ -267,22 +268,28 @@ export async function activate(context: vscode.ExtensionContext) {
       // });
 
       // Rewrite with operator
-      OBS_WS_subject$.subscribe({
-        next: async (msg: Message) => {
-          if (WebSocketOpCode.Hello === msg.op) {
-            console.log('hello');
-          }
-          if (WebSocketOpCode.RequestResponse === msg.op) {
-            console.log(`${msg.d.requestType} : result : ${msg.d.requestStatus.result}`);
-          }
-        }, // Called whenever there is a message from the server.
-        error: (err) => vscode.window.showInformationMessage(err), // Called if at any point WebSocket API signals some kind of error.
-        complete: () => {
+      OBS_WS_subject$.onComplete$.subscribe({
+        next: () => {
           vscode.window.showInformationMessage('链接结束');
           context.workspaceState.update('isConnected', false);
           context.workspaceState.update('isRecording', false);
         }, // Called when connection is closed (for whatever reason).
       });
+      OBS_WS_subject$.onError$.subscribe({
+        next: (err) => vscode.window.showInformationMessage(err),
+      });
+      // OBS_WS_subject$.subscribe({
+      //   next: async (msg: Message) => {
+      //     if (WebSocketOpCode.Hello === msg.op) {
+      //       console.log('hello');
+      //     }
+      //     if (WebSocketOpCode.RequestResponse === msg.op) {
+      //       console.log(`${msg.d.requestType} : result : ${msg.d.requestStatus.result}`);
+      //     }
+      //   }, // Called whenever there is a message from the server.
+      // error: // Called if at any point WebSocket API signals some kind of error.
+      // complete:
+      // });
     })
   );
 

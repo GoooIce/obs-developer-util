@@ -331,6 +331,7 @@ export interface MessageTypes {
    * Client is making a request to obs-websocket. Eg get current scene, create source.
    */
   [WebSocketOpCode.Request]: RequestMessage;
+  [WebSocketOpCode.Event]: EventMessage;
 }
 
 export type EventMessage<T = keyof OBSEventTypes> = T extends keyof OBSEventTypes
