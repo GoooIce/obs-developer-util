@@ -86,14 +86,14 @@ describe('connect obs', () => {
           console.log(err);
         },
         complete() {
-          console.log('complete');
+          // console.log('complete');
         },
       });
 
       // websocketServer.unsubscribe();
 
-      const subscriptionsWithHello = websocketServer.subscriptions;
-      console.log(subscriptionsWithHello);
+      // const subscriptionsWithHello = websocketServer.subscriptions;
+      // console.log(subscriptionsWithHello);
       // expectObservable(websocketServer).toBe('-ba|', {
       //   a: helloMessage,
       //   b: identifyMessage,

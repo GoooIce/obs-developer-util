@@ -1,9 +1,19 @@
+// import * as uuid from 'uuid';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { filter, map, Observable, Subject, tap } from 'rxjs';
+import { filter, forkJoin, map, Observable, Observer, Subject, tap } from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
+import { ganOBSRequest } from './ganOBSRequest';
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { EventSubscription, Message, RequestMessage, WebSocketOpCode } from './types';
-import { needAuth, genIdentifyMessage } from './util';
+import {
+  EventSubscription,
+  Message,
+  OBSRequestTypes,
+  RequestMessage,
+  ResponseMessage,
+  WebSocketOpCode,
+} from './types';
+import { needAuth, genAuthString } from './util';
 
 interface OnWebSocketLife {
   onOpen$: Subject<void>;
@@ -41,6 +51,7 @@ export class OBSSubject implements OnWebSocketLife {
     this._ws_subject$.next(msg);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
   private _needAuth(msg: Message) {}
 
   private constructor(config: OBSWebSocketSubjectConfig) {
@@ -53,51 +64,66 @@ export class OBSSubject implements OnWebSocketLife {
     this.password$ = new Subject();
     this._ws_subject$ = webSocket(config);
 
-    const onAuth$ = this.onAuth$;
-    const password$ = this.password$;
-
+    // When Identified do onIdentified
     this._ws_subject$.pipe(filter((msg) => msg.op === WebSocketOpCode.Identified)).subscribe({
       next: () => {
         this.onIdentified$.next(true);
       },
     });
 
+    //#region 登录验证
     const identify$ = this._ws_subject$.pipe(
       filter((msg) => msg.op === WebSocketOpCode.Hello)
     ) as Observable<Message<WebSocketOpCode.Hello>>;
 
-    identify$.subscribe();
+    // identify$.subscribe();
     // need auth
-    identify$.pipe(filter((msg) => needAuth(msg))).subscribe({
-      next(msg) {
-        onAuth$.next();
-        password$.subscribe({
-          next(password) {
-            OBSSubject.obs_subject?._next(genIdentifyMessage(msg, EventSubscription.All, password));
-          },
-        });
-      },
+    const identifyOnAuth$ = identify$.pipe(
+      filter((msg) => needAuth(msg)),
+      tap(() => this.onAuth$.next())
+    );
+    forkJoin([identifyOnAuth$, this.password$]).subscribe({
+      next: this._auth_with_password_observer_next,
     });
 
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({
-      next(msg) {
-        OBSSubject.obs_subject?._next(genIdentifyMessage(msg, EventSubscription.All, ''));
-      },
+      next: this._auth_without_password_observer_next,
     });
+    //#endregion
 
-    this._ws_subject$.subscribe({
-      next: (msg: Message) => {
-        if (WebSocketOpCode.RequestResponse === msg.op) {
-          console.log(`${msg.d.requestType} : result : ${msg.d.requestStatus.result}`);
-        }
-      }, // Called whenever there is a message from the server.
-      error: (err) => this.onError$.next(err), // Called if at any point WebSocket API signals some kind of error.
-      complete: () => {
-        this.onComplete$.next();
-      },
-    });
+    this._ws_subject$.subscribe(this._ws_subject_observer);
   }
+
+  private _identify_msg: Message<WebSocketOpCode.Identify> = {
+    op: WebSocketOpCode.Identify,
+    d: {
+      rpcVersion: 1,
+      eventSubscriptions: EventSubscription.All,
+    },
+  };
+
+  private _auth_without_password_observer_next = () => {
+    this._next(this._identify_msg);
+  };
+
+  private _auth_with_password_observer_next = ([msg, password]: [
+    Message<WebSocketOpCode.Hello>,
+    string
+  ]) => {
+    if (msg.d.authentication)
+      this._identify_msg.d.authentication = genAuthString(msg.d.authentication, password);
+    this._next(this._identify_msg);
+  };
+
+  private _ws_subject_observer: Observer<Message> = {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    next: () => {}, // Called whenever there is a message from the server.
+    error: (err) => this.onError$.next(err), // Called if at any point WebSocket API signals some kind of error.
+    complete: () => {
+      this.onComplete$.next();
+    },
+  };
 
   public static getSubject(config?: OBSWebSocketSubjectConfig) {
     if (this.obs_subject) return this.obs_subject;
@@ -119,5 +145,18 @@ export class OBSSubject implements OnWebSocketLife {
     this.obs_subject?.onError$.unsubscribe();
     this.obs_subject?._ws_subject$.unsubscribe();
     OBSSubject.obs_subject = undefined;
+  }
+
+  public _api(
+    requestType: keyof OBSRequestTypes,
+    requestData?: OBSRequestTypes[typeof requestType]
+  ): Observable<ResponseMessage<typeof requestType>> {
+    return ganOBSRequest<typeof requestType>(this._ws_subject$, requestType, requestData);
+  }
+
+  public GetRecordStatus() {
+    return this._api('GetRecordStatus') as unknown as Observable<
+      ResponseMessage<'GetRecordStatus'>
+    >;
   }
 }
