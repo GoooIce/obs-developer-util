@@ -7,10 +7,12 @@ import { keychain } from './keychain';
 import { tipWithColors$ } from './tipWithColors';
 // import { genIdentifyMessage } from './obs-websocket/util';
 import {
+  EventMessage,
   // EventSubscription,
   // WebSocketOpCode,
   // WebSocketCloseCode,
   Message,
+  WebSocketCloseCode,
 } from './obs-websocket/types';
 import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -77,43 +79,6 @@ export async function activate(context: vscode.ExtensionContext) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).WebSocket = require('ws');
   }
-
-  // const observer = {
-  //   next: (e: CloseEvent) => {
-  //     const obs_ws_address = config.get<string>('address', 'localhost:4455');
-  //     if (WebSocketCloseCode.AuthenticationFailed === e.code) {
-  //       vscode.window
-  //         .showInputBox({ placeHolder: 'password', title: 'OBS WebSocket Password' })
-  //         .then(async (input_value) => {
-  //           await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
-  //           vscode.window.showInformationMessage(`retry connecting`);
-  //           vscode.commands.executeCommand(connectCommandId);
-  //         });
-  //     }
-  //     if (WebSocketCloseCode.CantConnect === e.code) {
-  //       vscode.window
-  //         .showWarningMessage(
-  //           `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
-  //           '修改地址'
-  //         )
-  //         .then(() => {
-  //           vscode.window
-  //             .showInputBox({ placeHolder: 'localhost:4455', title: 'OBS WebSocket Address' })
-  //             .then(async (input_value) => {
-  //               config.update('address', input_value);
-  //               vscode.commands.executeCommand(connectCommandId);
-  //             });
-  //         });
-  //     } else {
-  //       vscode.window.showErrorMessage(
-  //         `${e.code} + ${e.reason}, [帮助](https://github.com/GoooIce/obs-developer-util/issues)`
-  //       );
-  //       statusBarItem$.next();
-  //     }
-  //   },
-  //   error: (err: ErrorEvent) => console.error('Observer got an error: ' + err),
-  //   complete: () => console.log('Observer got a complete notification'),
-  // };
 
   context.subscriptions.push(
     vscode.commands.registerCommand(tipWithPanelCommandID, () => {
@@ -195,8 +160,9 @@ export async function activate(context: vscode.ExtensionContext) {
         complete() {
           statusBarItem$.next();
         },
-        error(err) {
-          console.log(err);
+        async error(err: CloseEvent) {
+          vscode.window.showErrorMessage(err.reason);
+          await keychain?.deletePassword(extensionKey, obs_ws_address);
         },
       });
 
@@ -221,16 +187,44 @@ export async function activate(context: vscode.ExtensionContext) {
       // Rewrite with operator
       obs.onComplete$.subscribe({
         next: () => {
-          vscode.window.showInformationMessage('链接结束');
-          context.workspaceState.update('isConnected', false);
-          context.workspaceState.update('isRecording', false);
+          vscode.window.showInformationMessage('已断开OBS链接');
+          reSetStateFalse();
         }, // Called when connection is closed (for whatever reason).
       });
+      // onClose
+      obs.onClose$.subscribe({
+        next(e) {
+          if (WebSocketCloseCode.CantConnect === e.code) {
+            vscode.window
+              .showWarningMessage(
+                `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
+                '修改地址'
+              )
+              .then((value) => {
+                if (value)
+                  vscode.window
+                    .showInputBox({ placeHolder: 'localhost:4455', title: 'OBS WebSocket Address' })
+                    .then(async (input_value) => {
+                      config.update('address', input_value);
+                      vscode.commands.executeCommand(connectCommandId);
+                    });
+              });
+          }
+        },
+      });
+      // onError
       obs.onError$.subscribe({
-        next: (err) => {
-          vscode.window.showInformationMessage(err);
-          context.workspaceState.update('isConnected', false);
-          context.workspaceState.update('isRecording', false);
+        next: (e) => {
+          vscode.window.showInformationMessage(
+            `${e.type} : ${e.message}, [帮助](https://github.com/GoooIce/obs-developer-util/issues)`
+          );
+          reSetStateFalse();
+        },
+      });
+      obs.fromEvent<'RecordStateChanged'>('RecordStateChanged').subscribe({
+        next(event: EventMessage<'RecordStateChanged'>) {
+          context.workspaceState.update('isRecording', event.eventData.outputActive);
+          statusBarItem$.next();
         },
       });
     })
@@ -247,6 +241,12 @@ export async function activate(context: vscode.ExtensionContext) {
   /**auto connect with config */
   const autoConnect = config.get<boolean>('autoConnect');
   if (autoConnect) vscode.commands.executeCommand(connectCommandId);
+
+  function reSetStateFalse() {
+    context.workspaceState.update('isConnected', false);
+    context.workspaceState.update('isRecording', false);
+    statusBarItem$.next();
+  }
 }
 
 // this method is called when your extension is deactivated

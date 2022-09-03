@@ -55,7 +55,7 @@ export class OBSSubject implements OnWebSocketLife {
   onOpen$: Subject<void>;
   onClose$: Subject<CloseEvent>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onError$: Subject<any>;
+  onError$: Subject<ErrorEvent>;
   onComplete$: Subject<void>;
 
   onIdentified$: Subject<boolean>;
@@ -67,15 +67,13 @@ export class OBSSubject implements OnWebSocketLife {
     this._ws_subject$.next(msg);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
-  private _needAuth(msg: Message) {}
-
   private _closeObserver = {
     next: (e: CloseEvent) => {
       if (WebSocketCloseCode.AuthenticationFailed === e.code) {
         return this.onAuth$.error(e);
       }
       // if (WebSocketCloseCode.CantConnect === e.code) {
+      //   return this.onError$.next(e);
       // }
       this.onClose$.next(e);
     },
@@ -91,6 +89,9 @@ export class OBSSubject implements OnWebSocketLife {
     this.onComplete$ = new Subject();
     this.onIdentified$ = new Subject();
     this.password$ = new Subject();
+
+    if (undefined === config.closeObserver) config.closeObserver = this._closeObserver;
+
     this._ws_subject$ = webSocket(config);
 
     // When Identified do onIdentified
@@ -185,12 +186,14 @@ export class OBSSubject implements OnWebSocketLife {
     OBSSubject.obs_subject = undefined;
   }
 
-  public fromEvent(eventType: keyof OBSEventTypes) {
+  public fromEvent<T extends keyof OBSEventTypes>(eventType: T) {
     const event$ = this._ws_subject$.pipe(
       filter((msg) => WebSocketOpCode.Event === msg.op),
-      map((msg) => msg.d as EventMessage<typeof eventType>)
+      map((msg) => msg.d as EventMessage<T>)
     );
-    return event$.pipe(filter((msg) => msg.eventType === eventType));
+    return event$.pipe(filter((msg) => msg.eventType === eventType)) as unknown as Observable<
+      EventMessage<T>
+    >;
   }
 
   public _api(
