@@ -52,6 +52,19 @@
             "default": "localhost:4455",
             "description": "OBS Websocket address"
           },
+          "OBS-DeveloperUtil.visualCues": {
+            "type": "string",
+            "default": "timer",
+            "description": "you can provide yourself additional visual cues to record",
+            "enum": [
+              "timer",
+              "color"
+            ],
+            "enumDescriptions": [
+              "an timer animal",
+              "change vscode color 3 times"
+            ]
+          },
           "OBS-DeveloperUtil.autoConnect": {
             "type": "boolean",
             "default": false,

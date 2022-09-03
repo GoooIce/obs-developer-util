@@ -125,9 +125,11 @@ export async function activate(context: vscode.ExtensionContext) {
       const isConnected = context.workspaceState.get('isConnected');
       const isRecording = context.workspaceState.get('isRecording');
       if (isConnected && !isRecording) {
-        return tipWithColors$.subscribe({
-          complete: () => vscode.commands.executeCommand(recordCommandId),
-        });
+        if ('color' === config.visual_cue)
+          return tipWithColors$.subscribe({
+            complete: () => vscode.commands.executeCommand(recordCommandId),
+          });
+        BasePanel.render(context.extensionUri);
       }
 
       if (isConnected && isRecording) {
@@ -246,10 +248,12 @@ export async function activate(context: vscode.ExtensionContext) {
   function loadConfig() {
     const config = vscode.workspace.getConfiguration(extensionKey);
     const obs_ws_address = config.get<string>('address', 'localhost:4455');
+    const visual_cue = config.get<string>('visualCues', 'timer');
     const autoConnect = config.get<boolean>('autoConnect');
     return {
       obs_ws_address,
       autoConnect,
+      visual_cue,
     };
   }
 
