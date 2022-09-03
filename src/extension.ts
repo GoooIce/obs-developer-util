@@ -45,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('obs-developer-util is now active!');
-  const config = vscode.workspace.getConfiguration(extensionKey);
+  let config = loadConfig();
 
   // create a new status bar item that we can now manage
   const myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -134,22 +134,21 @@ export async function activate(context: vscode.ExtensionContext) {
         return vscode.commands.executeCommand(stopRecordCommandId);
       }
 
-      const config = vscode.workspace.getConfiguration(extensionKey);
-      const obs_ws_address = config.get<string>('address', 'localhost:4455');
       const serverConfig: WebSocketSubjectConfig<Message> = {
-        url: `ws://${obs_ws_address}`,
+        url: `ws://${config.obs_ws_address}`,
       };
       obs = OBSSubject.getSubject(serverConfig);
 
       obs.onAuth$.subscribe({
         async next() {
-          const _save_password = (await keychain?.getPassword(extensionKey, obs_ws_address)) || '';
+          const _save_password =
+            (await keychain?.getPassword(extensionKey, config.obs_ws_address)) || '';
           if ('' !== _save_password) return obs.password$.next(_save_password);
           vscode.window
             .showInputBox({ placeHolder: 'password', title: 'OBS WebSocket Password' })
             .then(async (input_value) => {
               if (input_value && '' !== input_value) {
-                await keychain?.setPassword(extensionKey, obs_ws_address, `${input_value}`);
+                await keychain?.setPassword(extensionKey, config.obs_ws_address, `${input_value}`);
                 return obs.password$.next(input_value);
               }
 
@@ -162,7 +161,7 @@ export async function activate(context: vscode.ExtensionContext) {
         },
         async error(err: CloseEvent) {
           vscode.window.showErrorMessage(err.reason);
-          await keychain?.deletePassword(extensionKey, obs_ws_address);
+          await keychain?.deletePassword(extensionKey, config.obs_ws_address);
         },
       });
 
@@ -194,10 +193,12 @@ export async function activate(context: vscode.ExtensionContext) {
       // onClose
       obs.onClose$.subscribe({
         next(e) {
+          OBSSubject.unsubscribe();
+          reSetStateFalse();
           if (WebSocketCloseCode.CantConnect === e.code) {
             vscode.window
               .showWarningMessage(
-                `${obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址,[帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
+                `${config.obs_ws_address} 连接失败,请检查obs-websocket状态或输入其他地址. [帮助](https://github.com/GoooIce/obs-developer-util/issues)`,
                 '修改地址'
               )
               .then((value) => {
@@ -205,8 +206,8 @@ export async function activate(context: vscode.ExtensionContext) {
                   vscode.window
                     .showInputBox({ placeHolder: 'localhost:4455', title: 'OBS WebSocket Address' })
                     .then(async (input_value) => {
-                      config.update('address', input_value);
-                      vscode.commands.executeCommand(connectCommandId);
+                      const _config = vscode.workspace.getConfiguration(extensionKey);
+                      _config.update('address', input_value);
                     });
               });
           }
@@ -239,14 +240,28 @@ export async function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.show();
 
   /**auto connect with config */
-  const autoConnect = config.get<boolean>('autoConnect');
-  if (autoConnect) vscode.commands.executeCommand(connectCommandId);
+
+  if (config.autoConnect) vscode.commands.executeCommand(connectCommandId);
+
+  function loadConfig() {
+    const config = vscode.workspace.getConfiguration(extensionKey);
+    const obs_ws_address = config.get<string>('address', 'localhost:4455');
+    const autoConnect = config.get<boolean>('autoConnect');
+    return {
+      obs_ws_address,
+      autoConnect,
+    };
+  }
 
   function reSetStateFalse() {
     context.workspaceState.update('isConnected', false);
     context.workspaceState.update('isRecording', false);
     statusBarItem$.next();
   }
+
+  vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration(extensionKey)) config = loadConfig();
+  });
 }
 
 // this method is called when your extension is deactivated
