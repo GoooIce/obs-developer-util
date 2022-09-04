@@ -119,11 +119,15 @@ describe('subject', () => {
   };
   const identifyOpMsg: Message<WebSocketOpCode.Identify> = {
     op: WebSocketOpCode.Identify,
-    d: { rpcVersion: 1 },
+    d: { rpcVersion: 1, eventSubscriptions: EventSubscription.All },
   };
   const identifyOpMsgWithAuth: Message<WebSocketOpCode.Identify> = {
     op: WebSocketOpCode.Identify,
-    d: { rpcVersion: 1, authentication: '1Ct943GAT+6YQUUX47Ia/ncufilbe6+oD6lY+5kaCu4=' },
+    d: {
+      rpcVersion: 1,
+      eventSubscriptions: EventSubscription.All,
+      authentication: '1Ct943GAT+6YQUUX47Ia/ncufilbe6+oD6lY+5kaCu4=',
+    },
   };
 
   const identifiedOpMsg: Message<WebSocketOpCode.Identified> = {
@@ -133,6 +137,7 @@ describe('subject', () => {
     },
   };
   // let testScheduler: TestScheduler;
+  // let obs: OBSSubject;
   let __ws: any;
 
   function setupMockWebSocket() {
@@ -145,9 +150,15 @@ describe('subject', () => {
     MockWebSocket.clearSockets();
   }
 
+  // function teardownRootWebSocket() {
+  //   root.WebSocket = __ws;
+  //   // MockWebSocket.clearSockets();
+  // }
+
   describe('auth behavior', () => {
     beforeEach(() => {
       setupMockWebSocket();
+      // obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
     });
 
     afterEach(() => {
@@ -155,9 +166,12 @@ describe('subject', () => {
       OBSSubject.unsubscribe();
     });
 
+    // afterAll(() => {
+    //   teardownRootWebSocket();
+    // });
+
     it('if dont need auth client should receive hello messages until identified', () => {
       let identifiedReceived = false;
-
       const obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
 
       obs.onIdentified$.subscribe((x) => {
@@ -169,15 +183,30 @@ describe('subject', () => {
 
       socket.open();
       socket.triggerMessage(JSON.stringify(helloOpMsg));
-      expect(socket.lastMessageSent).toEqual(
-        JSON.stringify({
-          op: WebSocketOpCode.Identify,
-          d: {
-            rpcVersion: 1,
-            eventSubscriptions: EventSubscription.All,
-          },
-        })
-      );
+      expect(socket.lastMessageSent).toEqual(JSON.stringify(identifyOpMsg));
+      socket.triggerMessage(JSON.stringify(identifiedOpMsg));
+      expect(identifiedReceived).toBeTruthy();
+    });
+
+    it('if need auth, client should receive hello message util onAuth$.next', () => {
+      let onAuthReceived = false;
+      let identifiedReceived = false;
+      const obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
+
+      obs.onIdentified$.subscribe((x) => {
+        identifiedReceived = x;
+      });
+
+      obs.onAuth$.subscribe(() => {
+        onAuthReceived = true;
+        obs.password$.next(password);
+      });
+
+      const socket = MockWebSocket.lastSocket;
+      socket.open();
+      socket.triggerMessage(JSON.stringify(helloOpMsgWithAuth));
+      expect(onAuthReceived).toBeTruthy();
+      expect(socket.lastMessageSent).toEqual(JSON.stringify(identifyOpMsgWithAuth));
       socket.triggerMessage(JSON.stringify(identifiedOpMsg));
       expect(identifiedReceived).toBeTruthy();
     });

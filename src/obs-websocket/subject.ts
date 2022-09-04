@@ -75,7 +75,7 @@ export class OBSSubject implements OnWebSocketLife {
 
     this._ws_subject$ = webSocket(config);
 
-    //#region 登录验证
+    // #region 登录验证
     // When Identified do onIdentified
     this._ws_subject$.pipe(filter((msg) => msg.op === WebSocketOpCode.Identified)).subscribe({
       next: () => {
@@ -102,7 +102,7 @@ export class OBSSubject implements OnWebSocketLife {
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({
       next: this._auth_without_password_observer_next,
     });
-    //#endregion
+    // #endregion
 
     this._ws_subject$.subscribe(this._ws_subject_observer);
   }
