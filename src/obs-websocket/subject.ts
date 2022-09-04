@@ -1,19 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// import * as uuid from 'uuid';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {
-  combineLatestWith,
-  filter,
-  forkJoin,
-  lastValueFrom,
-  map,
-  Observable,
-  Observer,
-  pipe,
-  Subject,
-  tap,
-  withLatestFrom,
-} from 'rxjs';
+import { combineLatestWith, filter, map, Observable, Observer, Subject, tap } from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
 import { ganOBSRequest } from './ganOBSRequest';
 
@@ -23,8 +8,6 @@ import {
   Message,
   OBSEventTypes,
   OBSRequestTypes,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  RequestMessage,
   ResponseMessage,
   WebSocketCloseCode,
   WebSocketOpCode,
@@ -54,16 +37,14 @@ export class OBSSubject implements OnWebSocketLife {
 
   onOpen$: Subject<void>;
   onClose$: Subject<CloseEvent>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onError$: Subject<ErrorEvent>;
   onComplete$: Subject<void>;
 
   onIdentified$: Subject<boolean>;
 
   private readonly _ws_subject$: OBSWebSocketSubject;
-  // private _config: WebSocketSubjectConfig<Message>;
 
-  private _next(msg: Message) {
+  public _next(msg: Message) {
     this._ws_subject$.next(msg);
   }
 
@@ -94,6 +75,7 @@ export class OBSSubject implements OnWebSocketLife {
 
     this._ws_subject$ = webSocket(config);
 
+    //#region 登录验证
     // When Identified do onIdentified
     this._ws_subject$.pipe(filter((msg) => msg.op === WebSocketOpCode.Identified)).subscribe({
       next: () => {
@@ -101,14 +83,11 @@ export class OBSSubject implements OnWebSocketLife {
       },
     });
 
-    //#region 登录验证
     const identify$ = this._ws_subject$.pipe(
       filter((msg) => msg.op === WebSocketOpCode.Hello)
     ) as Observable<Message<WebSocketOpCode.Hello>>;
 
-    // identify$.subscribe();
     // need auth
-    // const identifyOnAuth$ =
     identify$
       .pipe(
         filter((msg) => needAuth(msg)),
@@ -118,10 +97,6 @@ export class OBSSubject implements OnWebSocketLife {
       .subscribe({
         next: this._auth_with_password_observer_next,
       });
-
-    // forkJoin([lastValueFrom(identifyOnAuth$), this.password$]).subscribe({
-    //   next: this._auth_with_password_observer_next,
-    // });
 
     // dont need auth
     identify$.pipe(filter((msg) => !needAuth(msg))).subscribe({

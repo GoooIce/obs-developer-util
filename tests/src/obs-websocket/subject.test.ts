@@ -7,7 +7,7 @@ jest.unmock('../../../src/obs-websocket/util');
 // github.com/ReactiveX/rxjs/blob/47fa8d555754b18887baf15e22eb3dd91bf8bfea/spec/observables/dom/webSocket-spec.ts
 import { firstValueFrom } from 'rxjs';
 import { OBSSubject } from '../../../src/obs-websocket/subject';
-import { Message, WebSocketOpCode } from '../../../src/obs-websocket/types';
+import { EventSubscription, Message, WebSocketOpCode } from '../../../src/obs-websocket/types';
 import { webSocket } from 'rxjs/webSocket';
 // import { TestScheduler } from 'rxjs/testing';
 
@@ -145,108 +145,116 @@ describe('subject', () => {
     MockWebSocket.clearSockets();
   }
 
-  describe('basic behavior', () => {
+  describe('auth behavior', () => {
     beforeEach(() => {
       setupMockWebSocket();
     });
 
     afterEach(() => {
       teardownMockWebSocket();
+      OBSSubject.unsubscribe();
     });
 
-    it('should send and receive messages', () => {
-      let messageReceived = false;
-      const subject = webSocket<string>('ws://mysocket');
+    it('if dont need auth client should receive hello messages until identified', () => {
+      let identifiedReceived = false;
 
-      subject.next('ping');
+      const obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
 
-      subject.subscribe((x) => {
-        expect(x).toEqual('pong');
-        messageReceived = true;
+      obs.onIdentified$.subscribe((x) => {
+        identifiedReceived = x;
       });
 
       const socket = MockWebSocket.lastSocket;
       expect(socket.url).toEqual('ws://mysocket');
 
       socket.open();
-      expect(socket.lastMessageSent).toEqual(JSON.stringify('ping'));
-
-      socket.triggerMessage(JSON.stringify('pong'));
-      expect(messageReceived).toBeTruthy();
-
-      subject.unsubscribe();
+      socket.triggerMessage(JSON.stringify(helloOpMsg));
+      expect(socket.lastMessageSent).toEqual(
+        JSON.stringify({
+          op: WebSocketOpCode.Identify,
+          d: {
+            rpcVersion: 1,
+            eventSubscriptions: EventSubscription.All,
+          },
+        })
+      );
+      socket.triggerMessage(JSON.stringify(identifiedOpMsg));
+      expect(identifiedReceived).toBeTruthy();
     });
   });
-
-  // it('jest-websocket-mock work', () => {
-  //   const client = new WebSocket('ws://localhost:4455');
-  //   client.send('{"result":true, "count":42}');
-
-  //   expect(ws).toReceiveMessage({ result: true, count: 42 });
-  //   // expect(ws).toHaveReceivedMessages(['hello']);
-  // });
-
-  // it('obssubject next send message', () => {
-  //   const obs = OBSSubject.getSubject();
-  //   obs.next(identifyOpMsg);
-  //   expect(ws).toReceiveMessage(identifiedOpMsg);
-  // });
-
-  // it('sigleton', () => {
-  //   // testScheduler.run(({ expectObservable, expectSubscriptions }) => {});
-  //   const obs1 = OBSSubject.getSubject();
-  //   const obs2 = OBSSubject.getSubject();
-
-  //   expect(obs1).toBe(obs2);
-  // });
-
-  // it('onOpen singleton', () => {
-  //   let foo = true;
-  //   const obs = OBSSubject.getSubject();
-  //   const obs_ext = OBSSubject.getSubject();
-  //   obs_ext.onOpen$.subscribe({
-  //     next: () => {
-  //       foo = false;
-  //     },
-  //   });
-  //   obs.onOpen$.next();
-
-  //   expect(foo).toBeFalsy();
-  // });
-
-  // it('onAuth', () => {
-  //   const obs = OBSSubject.getSubject();
-  //   obs.onAuth$.subscribe({
-  //     next: (value) => {
-  //       obs.password$.next(password);
-  //     },
-  //   });
-
-  //   // ws.connected;
-  //   ws.send(helloOpMsgWithAuth);
-  //   expect(ws).toReceiveMessage(identifyOpMsgWithAuth);
-  // });
-
-  // it('identified', () => {
-  //   return new Promise<void>((done) => {
-  //     let foo = false;
-  //     const obs = OBSSubject.getSubject();
-  //     obs.onIdentified$.subscribe({
-  //       next: (value) => {
-  //         foo = value;
-  //         expect(foo).toBeTruthy();
-  //         done();
-  //       },
-  //     });
-  //     expect(foo).toBeFalsy();
-  //     ws.send({
-  //       op: WebSocketOpCode.Identified,
-  //       d: {
-  //         negotiatedRpcVersion: 1,
-  //       },
-  //     });
-
-  //     return firstValueFrom(obs.onIdentified$);
-  //   });
-  // });
 });
+
+/*
+// it('jest-websocket-mock work', () => {
+//   const client = new WebSocket('ws://localhost:4455');
+//   client.send('{"result":true, "count":42}');
+
+//   expect(ws).toReceiveMessage({ result: true, count: 42 });
+//   // expect(ws).toHaveReceivedMessages(['hello']);
+// });
+
+// it('obssubject next send message', () => {
+//   const obs = OBSSubject.getSubject();
+//   obs.next(identifyOpMsg);
+//   expect(ws).toReceiveMessage(identifiedOpMsg);
+// });
+
+// it('sigleton', () => {
+//   // testScheduler.run(({ expectObservable, expectSubscriptions }) => {});
+//   const obs1 = OBSSubject.getSubject();
+//   const obs2 = OBSSubject.getSubject();
+
+//   expect(obs1).toBe(obs2);
+// });
+
+// it('onOpen singleton', () => {
+//   let foo = true;
+//   const obs = OBSSubject.getSubject();
+//   const obs_ext = OBSSubject.getSubject();
+//   obs_ext.onOpen$.subscribe({
+//     next: () => {
+//       foo = false;
+//     },
+//   });
+//   obs.onOpen$.next();
+
+//   expect(foo).toBeFalsy();
+// });
+
+// it('onAuth', () => {
+//   const obs = OBSSubject.getSubject();
+//   obs.onAuth$.subscribe({
+//     next: (value) => {
+//       obs.password$.next(password);
+//     },
+//   });
+
+//   // ws.connected;
+//   ws.send(helloOpMsgWithAuth);
+//   expect(ws).toReceiveMessage(identifyOpMsgWithAuth);
+// });
+
+// it('identified', () => {
+//   return new Promise<void>((done) => {
+//     let foo = false;
+//     const obs = OBSSubject.getSubject();
+//     obs.onIdentified$.subscribe({
+//       next: (value) => {
+//         foo = value;
+//         expect(foo).toBeTruthy();
+//         done();
+//       },
+//     });
+//     expect(foo).toBeFalsy();
+//     ws.send({
+//       op: WebSocketOpCode.Identified,
+//       d: {
+//         negotiatedRpcVersion: 1,
+//       },
+//     });
+
+//     return firstValueFrom(obs.onIdentified$);
+//   });
+// });
+// });
+*/
