@@ -1,4 +1,14 @@
-import { combineLatestWith, filter, map, Observable, Observer, Subject, tap } from 'rxjs';
+import {
+  // catchError,
+  combineLatestWith,
+  filter,
+  map,
+  Observable,
+  Observer,
+  Subject,
+  tap,
+  config,
+} from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
 import { ganOBSRequest } from './ganOBSRequest';
 
@@ -62,7 +72,7 @@ export class OBSSubject implements OnWebSocketLife {
     complete: () => console.log('Observer got a complete notification'),
   };
 
-  private constructor(config: OBSWebSocketSubjectConfig) {
+  private constructor(_config: OBSWebSocketSubjectConfig) {
     this.onClose$ = new Subject();
     this.onOpen$ = new Subject();
     this.onAuth$ = new Subject();
@@ -71,9 +81,14 @@ export class OBSSubject implements OnWebSocketLife {
     this.onIdentified$ = new Subject();
     this.password$ = new Subject();
 
-    if (undefined === config.closeObserver) config.closeObserver = this._closeObserver;
+    //TODO: bad hack
+    config.onUnhandledError = () => {
+      // this.onError$.next(e);
+    };
 
-    this._ws_subject$ = webSocket(config);
+    if (undefined === _config.closeObserver) _config.closeObserver = this._closeObserver;
+
+    this._ws_subject$ = webSocket(_config);
 
     // #region 登录验证
     // When Identified do onIdentified
@@ -129,8 +144,9 @@ export class OBSSubject implements OnWebSocketLife {
   };
 
   private _ws_subject_observer: Observer<Message> = {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    next: () => {}, // Called whenever there is a message from the server.
+    next: () => {
+      // if (__DEV__) console.log(msg);
+    }, // Called whenever there is a message from the server.
     error: (err) => this.onError$.next(err), // Called if at any point WebSocket API signals some kind of error.
     complete: () => {
       this.onComplete$.next();
@@ -151,6 +167,7 @@ export class OBSSubject implements OnWebSocketLife {
   }
 
   public static unsubscribe() {
+    //FIX: config.onUnhandledError = null; hack is bad....
     this.obs_subject?.onAuth$.unsubscribe();
     this.obs_subject?.onIdentified$.unsubscribe();
     this.obs_subject?.password$.unsubscribe();

@@ -15,6 +15,7 @@ import {
   WebSocketOpCode,
 } from '../../../src/obs-websocket/types';
 import { webSocket } from 'rxjs/webSocket';
+import { dir } from 'console';
 // import { TestScheduler } from 'rxjs/testing';
 
 const root: any =
@@ -205,11 +206,17 @@ describe('subject', () => {
           isAuthFailed = true;
         },
       });
+
+      // obs.onError$.subscribe((e) => console.log(e));
       const socket = MockWebSocket.lastSocket;
       socket.open();
-      // socket close with Auth Faild message
-      socket.triggerClose({ code: WebSocketCloseCode.AuthenticationFailed });
-      expect(isAuthFailedCloseCode).toBeFalsy();
+      // socket close with Auth Failed message
+      socket.triggerClose({
+        code: WebSocketCloseCode.AuthenticationFailed,
+        reason: 'AuthenticationFailed',
+      });
+      socket.close(WebSocketCloseCode.AuthenticationFailed, 'auth failed');
+      expect(isAuthFailedCloseCode).toBeTruthy();
       expect(isAuthFailed).toBeTruthy();
     });
 

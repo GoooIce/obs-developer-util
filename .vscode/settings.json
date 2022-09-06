@@ -11,5 +11,6 @@
   "cSpell.enableFiletypes": ["!markdown"],
   "workbench.colorCustomizations": {
     "activityBar.activeBorder": "#06b9a5"
-  }
+  },
+  "OBS-DeveloperUtil.address": "localhost:4456"
 }
