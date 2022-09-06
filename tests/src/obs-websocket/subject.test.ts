@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 jest.unmock('../../../src/obs-websocket/subject');
 jest.unmock('../../../src/obs-websocket/util');
 // jest.unmock('jest-websocket-mock');
 // import WS from 'jest-websocket-mock';
 // learn how to mock with
 // github.com/ReactiveX/rxjs/blob/47fa8d555754b18887baf15e22eb3dd91bf8bfea/spec/observables/dom/webSocket-spec.ts
-import { firstValueFrom } from 'rxjs';
+import { config } from 'rxjs';
 import { OBSSubject } from '../../../src/obs-websocket/subject';
 import {
   EventMessage,
@@ -14,9 +13,6 @@ import {
   WebSocketCloseCode,
   WebSocketOpCode,
 } from '../../../src/obs-websocket/types';
-import { webSocket } from 'rxjs/webSocket';
-import { dir } from 'console';
-// import { TestScheduler } from 'rxjs/testing';
 
 const root: any =
   (typeof globalThis !== 'undefined' && globalThis) ||
@@ -150,11 +146,18 @@ describe('subject', () => {
   function setupMockWebSocket() {
     __ws = root.WebSocket;
     root.WebSocket = MockWebSocket;
+    config.onUnhandledError = () => {
+      //TODO: bad hack
+      // config.onUnhandledError = () => {
+      // this.onError$.next(e);
+      // };
+    };
   }
 
   function teardownMockWebSocket() {
     root.WebSocket = __ws;
     MockWebSocket.clearSockets();
+    config.onUnhandledError = null;
   }
 
   describe('object behavior', () => {

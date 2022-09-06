@@ -7,7 +7,6 @@ import {
   Observer,
   Subject,
   tap,
-  config,
 } from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig, webSocket } from 'rxjs/webSocket';
 import { ganOBSRequest } from './ganOBSRequest';
@@ -80,11 +79,6 @@ export class OBSSubject implements OnWebSocketLife {
     this.onComplete$ = new Subject();
     this.onIdentified$ = new Subject();
     this.password$ = new Subject();
-
-    //TODO: bad hack
-    config.onUnhandledError = () => {
-      // this.onError$.next(e);
-    };
 
     if (undefined === _config.closeObserver) _config.closeObserver = this._closeObserver;
 
