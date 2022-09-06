@@ -51,7 +51,7 @@ export class OBSSubject implements OnWebSocketLife {
   private _closeObserver = {
     next: (e: CloseEvent) => {
       if (WebSocketCloseCode.AuthenticationFailed === e.code) {
-        return this.onAuth$.error(e);
+        this.onAuth$.error(e);
       }
       // if (WebSocketCloseCode.CantConnect === e.code) {
       //   return this.onError$.next(e);
