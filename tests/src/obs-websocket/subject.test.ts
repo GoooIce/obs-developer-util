@@ -14,6 +14,13 @@ import {
   WebSocketOpCode,
 } from '../../../src/obs-websocket/types';
 
+config.onUnhandledError = () => {
+  //TODO: bad hack
+  // config.onUnhandledError = () => {
+  // this.onError$.next(e);
+  // };
+};
+
 const root: any =
   (typeof globalThis !== 'undefined' && globalThis) ||
   (typeof self !== 'undefined' && self) ||
@@ -146,18 +153,12 @@ describe('subject', () => {
   function setupMockWebSocket() {
     __ws = root.WebSocket;
     root.WebSocket = MockWebSocket;
-    config.onUnhandledError = () => {
-      //TODO: bad hack
-      // config.onUnhandledError = () => {
-      // this.onError$.next(e);
-      // };
-    };
   }
 
   function teardownMockWebSocket() {
     root.WebSocket = __ws;
     MockWebSocket.clearSockets();
-    config.onUnhandledError = null;
+    // config.onUnhandledError = null;
   }
 
   describe('object behavior', () => {
@@ -205,7 +206,7 @@ describe('subject', () => {
       });
 
       obs.onAuth$.subscribe({
-        error: (e) => {
+        error: () => {
           isAuthFailed = true;
         },
       });
@@ -218,7 +219,6 @@ describe('subject', () => {
         code: WebSocketCloseCode.AuthenticationFailed,
         reason: 'AuthenticationFailed',
       });
-      socket.close(WebSocketCloseCode.AuthenticationFailed, 'auth failed');
       expect(isAuthFailedCloseCode).toBeTruthy();
       expect(isAuthFailed).toBeTruthy();
     });
