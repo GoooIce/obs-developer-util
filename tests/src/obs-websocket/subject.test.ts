@@ -7,7 +7,12 @@ jest.unmock('../../../src/obs-websocket/util');
 // github.com/ReactiveX/rxjs/blob/47fa8d555754b18887baf15e22eb3dd91bf8bfea/spec/observables/dom/webSocket-spec.ts
 import { firstValueFrom } from 'rxjs';
 import { OBSSubject } from '../../../src/obs-websocket/subject';
-import { EventSubscription, Message, WebSocketOpCode } from '../../../src/obs-websocket/types';
+import {
+  EventSubscription,
+  Message,
+  WebSocketCloseCode,
+  WebSocketOpCode,
+} from '../../../src/obs-websocket/types';
 import { webSocket } from 'rxjs/webSocket';
 // import { TestScheduler } from 'rxjs/testing';
 
@@ -150,10 +155,26 @@ describe('subject', () => {
     MockWebSocket.clearSockets();
   }
 
-  // function teardownRootWebSocket() {
-  //   root.WebSocket = __ws;
-  //   // MockWebSocket.clearSockets();
-  // }
+  describe('object behavior', () => {
+    beforeEach(() => {
+      setupMockWebSocket();
+      // obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
+    });
+
+    afterEach(() => {
+      teardownMockWebSocket();
+      OBSSubject.unsubscribe();
+    });
+    it('singleton', () => {
+      const obs1 = OBSSubject.getSubject({ url: 'ws://mysocket' });
+      const obs2 = OBSSubject.getSubject();
+      const socket = MockWebSocket.lastSocket;
+      expect(socket.url).toEqual('ws://mysocket');
+      expect(obs1).toBe(obs2);
+      socket.open();
+      expect(MockWebSocket.sockets.length).toBe(1);
+    });
+  });
 
   describe('auth behavior', () => {
     beforeEach(() => {
@@ -169,6 +190,27 @@ describe('subject', () => {
     // afterAll(() => {
     //   teardownRootWebSocket();
     // });
+    it('auth failed', () => {
+      let isAuthFailed = false;
+      let isAuthFailedCloseCode = false;
+      const obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
+      obs.onClose$.subscribe((e) => {
+        // dont allow exec
+        if (e.code === WebSocketCloseCode.AuthenticationFailed) isAuthFailedCloseCode = true;
+      });
+
+      obs.onAuth$.subscribe({
+        error: (e) => {
+          isAuthFailed = true;
+        },
+      });
+      const socket = MockWebSocket.lastSocket;
+      socket.open();
+      // socket close with Auth Faild message
+      socket.triggerClose({ code: WebSocketCloseCode.AuthenticationFailed });
+      expect(isAuthFailedCloseCode).toBeFalsy();
+      expect(isAuthFailed).toBeTruthy();
+    });
 
     it('if dont need auth client should receive hello messages until identified', () => {
       let identifiedReceived = false;
@@ -214,19 +256,7 @@ describe('subject', () => {
 });
 
 /*
-// it('jest-websocket-mock work', () => {
-//   const client = new WebSocket('ws://localhost:4455');
-//   client.send('{"result":true, "count":42}');
 
-//   expect(ws).toReceiveMessage({ result: true, count: 42 });
-//   // expect(ws).toHaveReceivedMessages(['hello']);
-// });
-
-// it('obssubject next send message', () => {
-//   const obs = OBSSubject.getSubject();
-//   obs.next(identifyOpMsg);
-//   expect(ws).toReceiveMessage(identifiedOpMsg);
-// });
 
 // it('sigleton', () => {
 //   // testScheduler.run(({ expectObservable, expectSubscriptions }) => {});
