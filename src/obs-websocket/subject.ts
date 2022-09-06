@@ -166,10 +166,9 @@ export class OBSSubject implements OnWebSocketLife {
       filter((msg) => WebSocketOpCode.Event === msg.op),
       map((msg) => msg.d as EventMessage<T>)
     );
-    return event$.pipe(
-      tap((x) => console.log(x)),
-      filter((msg) => msg.eventType === eventType)
-    ) as unknown as Observable<EventMessage<T>>;
+    return event$.pipe(filter((msg) => msg.eventType === eventType)) as unknown as Observable<
+      EventMessage<T>
+    >;
   }
 
   public _api(

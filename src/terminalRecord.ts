@@ -63,7 +63,9 @@ function createObsTerminal() {
       return;
     }
 
-    writeEmitter.fire('当前终端中的命令都将跳过录制，\x1b[31m不支持多行命令。\x1b[0m\r\n\r\n> ');
+    writeEmitter.fire(
+      '当前终端中的命令都将跳过录制，\x1b[31m不支持回退T.T 不支持多行命令。\x1b[0m\r\n\r\n> '
+    );
   };
 
   const obs_opts: vscode.ExtensionTerminalOptions = {
@@ -94,4 +96,21 @@ function createObsTerminal() {
   };
 
   vscode.window.createTerminal(obs_opts);
+
+  vscode.tasks.onDidStartTask((e) => {
+    const obs = OBSSubject.getSubject();
+    // console.log(e.execution.task.name, 'task start');
+    if ('OBS' === e.execution.task.name) {
+      obs._api('PauseRecord').subscribe();
+    }
+  });
+  // vscode.tasks.onDidStartTaskProcess((e) => console.dir(e));
+  vscode.tasks.onDidEndTask((e) => {
+    const obs = OBSSubject.getSubject();
+    // console.log(e.execution.task.name, 'task start');
+    if ('OBS' === e.execution.task.name) {
+      obs._api('ResumeRecord').subscribe();
+    }
+  });
+  // vscode.tasks.onDidEndTaskProcess((e) => console.dir(e));
 }

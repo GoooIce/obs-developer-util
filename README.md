@@ -25,12 +25,23 @@ This extension contributes the following settings:
 
 - `OBS-DeveloperUtil.autoConnect`: enable/disable this extension auto connect OBS
 - `OBS-DeveloperUtil.address`: set OBS Websocket address
+- `OBS-DeveloperUtil.visualCues`: set OBS Record starter animal
 
 ## Known Issues
 
 Calling out known issues can help limit users opening duplicate issues against your extension.
 
 ## Pre-Release Notes
+
+### 0.4.0
+
+1. 为终端命令提供了自动暂停/继续录制功能
+
+### 0.3.0
+
+1. 自动切换终端场景与桌面场景
+2. 添加了新的录制提示动画，可以通过配置项`OBS-DeveloperUtil.visualCues`选择
+3. 重构了 obs 连接库，预计 0.5.0 推出插件扩展接口
 
 ### 0.1.15
 
