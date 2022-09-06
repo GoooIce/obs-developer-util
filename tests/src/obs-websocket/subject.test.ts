@@ -8,6 +8,7 @@ jest.unmock('../../../src/obs-websocket/util');
 import { firstValueFrom } from 'rxjs';
 import { OBSSubject } from '../../../src/obs-websocket/subject';
 import {
+  EventMessage,
   EventSubscription,
   Message,
   WebSocketCloseCode,
@@ -253,67 +254,38 @@ describe('subject', () => {
       expect(identifiedReceived).toBeTruthy();
     });
   });
+  describe('event behavior', () => {
+    const sceneChangeEventMessage: Message<WebSocketOpCode.Event> = {
+      op: 5,
+      d: {
+        eventType: 'CurrentProgramSceneChanged',
+        eventIntent: 1,
+        eventData: {
+          sceneName: 'foo',
+        },
+      } as EventMessage<'CurrentProgramSceneChanged'>,
+    };
+    beforeEach(() => {
+      setupMockWebSocket();
+      // obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
+    });
+
+    afterEach(() => {
+      teardownMockWebSocket();
+      OBSSubject.unsubscribe();
+    });
+    it('fromEvent should work', () => {
+      let sceneChange = false;
+      const obs = OBSSubject.getSubject({ url: 'ws://mysocket' });
+      obs.fromEvent('CurrentProgramSceneChanged').subscribe((e) => {
+        if (e.eventType === 'CurrentProgramSceneChanged') {
+          sceneChange = true;
+        }
+      });
+      const socket = MockWebSocket.lastSocket;
+      socket.open();
+      socket.triggerMessage(JSON.stringify(sceneChangeEventMessage));
+      expect(sceneChange).toBeTruthy();
+    });
+  });
 });
-
-/*
-
-
-// it('sigleton', () => {
-//   // testScheduler.run(({ expectObservable, expectSubscriptions }) => {});
-//   const obs1 = OBSSubject.getSubject();
-//   const obs2 = OBSSubject.getSubject();
-
-//   expect(obs1).toBe(obs2);
-// });
-
-// it('onOpen singleton', () => {
-//   let foo = true;
-//   const obs = OBSSubject.getSubject();
-//   const obs_ext = OBSSubject.getSubject();
-//   obs_ext.onOpen$.subscribe({
-//     next: () => {
-//       foo = false;
-//     },
-//   });
-//   obs.onOpen$.next();
-
-//   expect(foo).toBeFalsy();
-// });
-
-// it('onAuth', () => {
-//   const obs = OBSSubject.getSubject();
-//   obs.onAuth$.subscribe({
-//     next: (value) => {
-//       obs.password$.next(password);
-//     },
-//   });
-
-//   // ws.connected;
-//   ws.send(helloOpMsgWithAuth);
-//   expect(ws).toReceiveMessage(identifyOpMsgWithAuth);
-// });
-
-// it('identified', () => {
-//   return new Promise<void>((done) => {
-//     let foo = false;
-//     const obs = OBSSubject.getSubject();
-//     obs.onIdentified$.subscribe({
-//       next: (value) => {
-//         foo = value;
-//         expect(foo).toBeTruthy();
-//         done();
-//       },
-//     });
-//     expect(foo).toBeFalsy();
-//     ws.send({
-//       op: WebSocketOpCode.Identified,
-//       d: {
-//         negotiatedRpcVersion: 1,
-//       },
-//     });
-
-//     return firstValueFrom(obs.onIdentified$);
-//   });
-// });
-// });
-*/

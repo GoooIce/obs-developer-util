@@ -1,6 +1,6 @@
-jest.unmock('../src/obs-websocket/util');
-import { EventSubscription, Message, WebSocketOpCode } from '../src/obs-websocket/types';
-import { genAuthString, needAuth, genIdentifyMessage } from '../src/obs-websocket/util';
+jest.unmock('../../../src/obs-websocket/util');
+import { EventSubscription, Message, WebSocketOpCode } from '../../../src/obs-websocket/types';
+import { genAuthString, needAuth, genIdentifyMessage } from '../../../src/obs-websocket/util';
 
 describe('authentication', () => {
   const salt = 'lM1GncleQOaCu9lT1yeUZhFYnqhsLLP1G5lAGo3ixaI=';

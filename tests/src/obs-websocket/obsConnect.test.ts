@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { filter, throttleTime } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
-import { WebSocketOpCode, Message } from '../src/obs-websocket/types';
+import { WebSocketOpCode, Message } from '../../../src/obs-websocket/types';
 
 describe('connect obs', () => {
   const helloMessage: Message<WebSocketOpCode.Hello> = {
