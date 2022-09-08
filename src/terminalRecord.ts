@@ -63,9 +63,37 @@ function createObsTerminal() {
       return;
     }
 
-    writeEmitter.fire(
-      '当前终端中的命令都将跳过录制，\x1b[31m不支持回退T.T 不支持多行命令。\x1b[0m\r\n\r\n> '
-    );
+    writeEmitter.fire('当前终端中的命令都将跳过录制，\x1b[31m 不支持多行命令。\x1b[0m\r\n\r\n> ');
+  };
+
+  const terminalHandleInput = (data: string): void => {
+    if (data === '\x7f') {
+      // Backspace
+      if (shellBuffer.length === 0) {
+        return;
+      }
+      shellBuffer = shellBuffer.substring(0, shellBuffer.length - 1);
+      // Move cursor backward
+      writeEmitter.fire('\x1b[D');
+      // Delete character
+      writeEmitter.fire('\x1b[P');
+      return;
+    }
+    shellBuffer += data;
+    writeEmitter.fire(data);
+    if (data === '\r' || data === '\r\n') {
+      vscode.tasks.executeTask(
+        new vscode.Task(
+          obs_td,
+          vscode.TaskScope.Workspace,
+          'OBS',
+          extensionKey,
+          new vscode.ShellExecution(shellBuffer)
+        )
+      );
+      shellBuffer = '';
+      resetTerminal();
+    }
   };
 
   const obs_opts: vscode.ExtensionTerminalOptions = {
@@ -75,23 +103,7 @@ function createObsTerminal() {
       open: resetTerminal,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       close: () => {},
-      handleInput: (data) => {
-        shellBuffer += data;
-        writeEmitter.fire(data);
-        if (data === '\r' || data === '\r\n') {
-          vscode.tasks.executeTask(
-            new vscode.Task(
-              obs_td,
-              vscode.TaskScope.Workspace,
-              'OBS',
-              extensionKey,
-              new vscode.ShellExecution(shellBuffer)
-            )
-          );
-          shellBuffer = '';
-          resetTerminal();
-        }
-      },
+      handleInput: terminalHandleInput,
     },
   };
 
