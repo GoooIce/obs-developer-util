@@ -11,3 +11,7 @@ export const resumeRecordCommandId = `${extensionKey}.resumeRecord`;
 export const stopRecordCommandId = `${extensionKey}.stopRecord`;
 // TODO v2
 // const stopRecordWithVideoCommandId = `${extensionKey}.stopRecordWithVideo`;
+export const toggleZenModeId = `${extensionKey}.toggleZenMode`;
+export const exitZenModeId = `${extensionKey}.exitZenMode`;
+
+export const isZenModeState = `${extensionKey}.isZenMode`;

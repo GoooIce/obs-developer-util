@@ -28,6 +28,7 @@ import {
 } from 'rxjs';
 import { BasePanel } from './panels/BasePanels';
 import { onDidChangeTerminalState } from './terminalRecord';
+import { onDidZenMode } from './timeLapse';
 import {
   extensionKey,
   connectCommandId,
@@ -45,6 +46,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('obs-developer-util is now active!');
+  vscode.commands.executeCommand('setContext', `${extensionKey}.remoteOBSidentified`, false);
   let config = loadConfig();
 
   // create a new status bar item that we can now manage
@@ -169,6 +171,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
       obs.onIdentified$.subscribe({
         next() {
+          // set context remoteOBSidentified
+          vscode.commands.executeCommand('setContext', `${extensionKey}.remoteOBSidentified`, true);
           context.workspaceState.update('isConnected', true);
           statusBarItem$.next();
           // request record status
@@ -182,6 +186,7 @@ export async function activate(context: vscode.ExtensionContext) {
           });
 
           onDidChangeTerminalState(context);
+          onDidZenMode(context, config);
         },
       });
 
@@ -226,8 +231,15 @@ export async function activate(context: vscode.ExtensionContext) {
       });
       obs.fromEvent<'RecordStateChanged'>('RecordStateChanged').subscribe({
         next(event: EventMessage<'RecordStateChanged'>) {
-          context.workspaceState.update('isRecording', event.eventData.outputActive);
-          statusBarItem$.next();
+          // vscode.window.showInformationMessage(event.eventData.outputState);
+          if ('OBS_WEBSOCKET_OUTPUT_STOPPED' === event.eventData.outputState) {
+            context.workspaceState.update('isRecording', event.eventData.outputActive);
+            statusBarItem$.next();
+          }
+          if ('OBS_WEBSOCKET_OUTPUT_STARTED' === event.eventData.outputState) {
+            context.workspaceState.update('isRecording', event.eventData.outputActive);
+            statusBarItem$.next();
+          }
         },
       });
     })
@@ -250,10 +262,12 @@ export async function activate(context: vscode.ExtensionContext) {
     const obs_ws_address = config.get<string>('address', 'localhost:4455');
     const visual_cue = config.get<string>('visualCues', 'timer');
     const autoConnect = config.get<boolean>('autoConnect');
+    const timeSpeed = config.get<number>('timeSpeed', 1500);
     return {
       obs_ws_address,
       autoConnect,
       visual_cue,
+      timeSpeed,
     };
   }
 
@@ -266,6 +280,12 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration(extensionKey)) config = loadConfig();
   });
+
+  return {
+    getOBS: () => {
+      return OBSSubject.getSubject();
+    },
+  };
 }
 
 // this method is called when your extension is deactivated

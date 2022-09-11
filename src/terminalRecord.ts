@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { count, filter, map, Observable, reduce, Subject, from } from 'rxjs';
 
-import { extensionKey } from './enum';
+import { extensionKey, isZenModeState } from './enum';
 import { OBSSubject } from './obs-websocket/subject';
 
 const terminalSceneName = 'Terminal';
@@ -14,7 +14,7 @@ export function onDidChangeTerminalState(context: vscode.ExtensionContext) {
     next(msg) {
       msg.responseData.scenes.forEach((value) => {
         if (value['sceneName'] === terminalSceneName) {
-          createObsTerminal();
+          createObsTerminal(context);
 
           // eslint-disable-next-line no-inner-declarations
           function changeScene<T>(sceneName: string) {
@@ -44,7 +44,7 @@ export function onDidChangeTerminalState(context: vscode.ExtensionContext) {
   });
 }
 
-function createObsTerminal() {
+function createObsTerminal(context: vscode.ExtensionContext) {
   const writeEmitter = new vscode.EventEmitter<string>();
   const obs_td: vscode.TaskDefinition = { type: 'any' };
 
@@ -63,7 +63,9 @@ function createObsTerminal() {
       return;
     }
 
-    writeEmitter.fire('当前终端中的命令都将跳过录制，\x1b[31m 不支持多行命令。\x1b[0m\r\n\r\n> ');
+    writeEmitter.fire(
+      '当前终端中的命令都将跳过录制\r\n\x1b[31m\tZen Mode 不生效\x1b[0m\r\n\x1b[31m\t不支持多行命令。\x1b[0m\r\n\r\n> '
+    );
   };
 
   const terminalHandleInput = (data: string): void => {
@@ -110,6 +112,9 @@ function createObsTerminal() {
   vscode.window.createTerminal(obs_opts);
 
   vscode.tasks.onDidStartTask((e) => {
+    if (context.workspaceState.get(isZenModeState)) {
+      return;
+    }
     const obs = OBSSubject.getSubject();
     // console.log(e.execution.task.name, 'task start');
     if ('OBS' === e.execution.task.name) {
@@ -118,6 +123,9 @@ function createObsTerminal() {
   });
   // vscode.tasks.onDidStartTaskProcess((e) => console.dir(e));
   vscode.tasks.onDidEndTask((e) => {
+    if (context.workspaceState.get(isZenModeState)) {
+      return;
+    }
     const obs = OBSSubject.getSubject();
     // console.log(e.execution.task.name, 'task start');
     if ('OBS' === e.execution.task.name) {

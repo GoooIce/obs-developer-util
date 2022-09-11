@@ -74,6 +74,11 @@
             "type": "boolean",
             "default": false,
             "description": "OBS Terminal would be clean"
+          },
+          "OBS-DeveloperUtil.timeSpeed": {
+            "type": "number",
+            "default": 1500,
+            "description": "**Unit: ms**, When VSCode use ZenMode OBS will record by this speed, just like time lapse"
           }
         }
       }
@@ -150,6 +155,18 @@
         "command": "OBS-DeveloperUtil.stopRecordWithVideo",
         "title": "obs stop record with video",
         "category": "OBS Commands"
+      },
+      {
+        "command": "OBS-DeveloperUtil.toggleZenMode",
+        "title": "toggle obs time lapse record with video",
+        "category": "OBS Commands",
+        "when": "OBS-DeveloperUtil.remoteOBSidentified"
+      },
+      {
+        "command": "OBS-DeveloperUtil.exitZenMode",
+        "title": "exit obs time lapse record with video",
+        "category": "OBS Commands",
+        "when": "OBS-DeveloperUtil.remoteOBSidentified"
       }
     ],
     "statusBarItems": [
@@ -157,6 +174,18 @@
         "command": "OBS-DeveloperUtil.statusBar",
         "text": "$(megaphone) this line(s) selected",
         "alignment": "right"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "OBS-DeveloperUtil.toggleZenMode",
+        "key": "Ctrl+K Z",
+        "when": "OBS-DeveloperUtil.remoteOBSidentified"
+      },
+      {
+        "command": "OBS-DeveloperUtil.exitZenMode",
+        "key": "Escape Escape",
+        "when": "OBS-DeveloperUtil.remoteOBSidentified"
       }
     ]
   },
