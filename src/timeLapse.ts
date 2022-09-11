@@ -1,27 +1,31 @@
 import * as vscode from 'vscode';
-import { interval, tap, Subscription, timer, merge } from 'rxjs';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { interval, tap, Subscription, merge, combineLatestWith } from 'rxjs';
 
 import { exitZenModeId, isZenModeState, toggleZenModeId } from './enum';
 
 import { OBSSubject } from './obs-websocket/subject';
 
 export function makeLapseObservable(timeSpeed: number) {
-  const timeLapse$ = interval(timeSpeed).pipe(
+  // const getOBS = vscode.extensions.getExtension(extensionKey)?.exports.getOBS;
+  const obs = OBSSubject.getSubject(); // getOBS();
+  const timeRecord$ = interval(100).pipe(
     tap(() => {
-      // const getOBS = vscode.extensions.getExtension(extensionKey)?.exports.getOBS;
-      const obs = OBSSubject.getSubject(); // getOBS();
-      obs._api('ResumeRecord').subscribe();
+      obs.PauseRecord().subscribe();
     })
   );
-  const timeRecord$ = interval(timeSpeed + 100).pipe(
-    tap(() => {
-      // const getOBS = vscode.extensions.getExtension(extensionKey)?.exports.getOBS;
-      const obs = OBSSubject.getSubject(); // getOBS();
-      obs._api('PauseRecord').subscribe();
-    })
+  const timeLapse$ = interval(timeSpeed).pipe(
+    tap({
+      next: () => {
+        obs.ResumeRecord().subscribe();
+      },
+    }),
+    combineLatestWith(timeRecord$)
   );
 
-  return merge(timeLapse$, timeRecord$);
+  return timeLapse$;
+
+  // return merge(timeLapse$, timeRecord$);
 }
 
 export function onDidZenMode(

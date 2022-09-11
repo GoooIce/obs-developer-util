@@ -204,4 +204,12 @@ export class OBSSubject implements OnWebSocketLife {
       sceneName: sceneName,
     }) as unknown as Observable<ResponseMessage<'SetCurrentProgramScene'>>;
   }
+
+  public ResumeRecord() {
+    return this._api('ResumeRecord') as unknown as Observable<ResponseMessage<'ResumeRecord'>>;
+  }
+
+  public PauseRecord() {
+    return this._api('PauseRecord') as unknown as Observable<ResponseMessage<'PauseRecord'>>;
+  }
 }
