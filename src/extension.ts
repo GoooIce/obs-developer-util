@@ -2,30 +2,11 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { WebSocketSubjectConfig } from 'rxjs/webSocket';
-// import { retry } from 'rxjs';
+
 import { keychain } from './keychain';
 import { tipWithColors$ } from './tipWithColors';
-// import { genIdentifyMessage } from './obs-websocket/util';
-import {
-  EventMessage,
-  // EventSubscription,
-  // WebSocketOpCode,
-  // WebSocketCloseCode,
-  Message,
-  WebSocketCloseCode,
-} from './obs-websocket/types';
-import {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  delay,
-  // filter,
-  // Observable,
-  // Observer,
-  Subject,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Subscriber,
-  // tap,
-  // timer,
-} from 'rxjs';
+import { EventMessage, Message, WebSocketCloseCode } from './obs-websocket/types';
+import { Subject } from 'rxjs';
 import { BasePanel } from './panels/BasePanels';
 import { onDidChangeTerminalState } from './terminalRecord';
 import { onDidZenMode } from './timeLapse';
@@ -37,7 +18,6 @@ import {
   recordCommandId,
   stopRecordCommandId,
 } from './enum';
-// import { ganOBSRequest } from './obs-websocket/ganOBSRequest';
 import { OBSSubject } from './obs-websocket/subject';
 
 // this method is called when your extension is activated
@@ -262,7 +242,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const obs_ws_address = config.get<string>('address', 'localhost:4455');
     const visual_cue = config.get<string>('visualCues', 'timer');
     const autoConnect = config.get<boolean>('autoConnect');
-    const timeSpeed = config.get<number>('timeSpeed', 1500);
+    const timeSpeed = config.get<number>('timeSpeed', 10000);
     return {
       obs_ws_address,
       autoConnect,

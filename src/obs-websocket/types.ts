@@ -2317,7 +2317,7 @@ export interface OBSResponseTypes {
     /**
      * Whether the output is paused
      */
-    ouputPaused: boolean;
+    outputPaused: boolean;
     /**
      * Current formatted timecode string for the output
      */
@@ -2334,7 +2334,9 @@ export interface OBSResponseTypes {
   ToggleRecord: undefined;
   StartRecord: undefined;
   StopRecord: undefined;
-  ToggleRecordPause: undefined;
+  ToggleRecordPause: {
+    outputPaused: boolean;
+  };
   PauseRecord: undefined;
   ResumeRecord: undefined;
   GetSceneItemList: {

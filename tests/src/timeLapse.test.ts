@@ -1,7 +1,7 @@
 jest.unmock('../../src/timeLapse');
 import { makeLapseObservable } from '../../src/timeLapse';
 import { TestScheduler } from 'rxjs/testing';
-import { map, take, tap } from 'rxjs';
+import { take } from 'rxjs';
 import { OBSSubject } from '../../src/obs-websocket/subject';
 
 OBSSubject.getSubject = jest.fn().mockReturnValue({
@@ -17,17 +17,32 @@ describe('timeLapse', () => {
     });
   });
 
-  it('timeLapse$', () => {
+  it('timeLapse$ 1000ms', () => {
     testScheduler.run(({ expectObservable }) => {
-      const timeLine = '1000ms a 2000ms a 3000ms a 4000ms a |';
-      // makeLapseObservable(1000).pipe(take(4), tap(console.log));
+      const timeLine = 'a 4999ms b 4999ms (c|)';
+      const values = {
+        a: 0,
+        b: 1,
+        c: 2,
+      };
+      const _$ = makeLapseObservable(5000).pipe(take(3));
+      _$.subscribe(console.log);
 
-      expectObservable(
-        makeLapseObservable(1000).pipe(
-          map(() => 0),
-          take(4)
-        )
-      ).toBe(timeLine, { a: 0 });
+      expectObservable(_$).toBe(timeLine, values);
+    });
+  });
+
+  it('timeLapse$ 3', () => {
+    testScheduler.run(({ expectObservable }) => {
+      const timeLine = 'a 4999ms b 4999ms (c|)';
+      const values = {
+        a: 0,
+        b: 1,
+        c: 2,
+      };
+      const _$ = makeLapseObservable(5000).pipe(take(3));
+
+      expectObservable(_$).toBe(timeLine, values);
     });
   });
 });

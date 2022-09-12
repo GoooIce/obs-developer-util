@@ -26,10 +26,30 @@ This extension contributes the following settings:
 - `OBS-DeveloperUtil.autoConnect`: enable/disable this extension auto connect OBS
 - `OBS-DeveloperUtil.address`: set OBS Websocket address
 - `OBS-DeveloperUtil.visualCues`: set OBS Record starter animal
+- `OBS-DeveloperUtil.timeSpeed`: time lapse range
 
 ## Known Issues
 
 Calling out known issues can help limit users opening duplicate issues against your extension.
+
+## Release Notes
+
+### 1.0.0
+
+1. 增加 Zen 模式延迟摄影模式。`Ctrl+K Z` 进入 Zen 模式 `Escape Escape` 退出
+2. getOBS 可用
+
+```json
+"extensionDependencies": ["GoooIce.obs-developer-util"]
+```
+
+```javascript
+// yarn add rxjs
+const getOBS = extensions.getExtension('GoooIce.obs-developer-util').exports.getOBS;
+const obs = getOBS();
+obs.fromEvent('SceneItemEnableStateChanged').subscribe((event) => {});
+obs._api('StopRecord').subscribe();
+```
 
 ## Pre-Release Notes
 

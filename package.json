@@ -25,7 +25,7 @@
     "type": "git",
     "url": "https://github.com/GoooIce/obs-developer-util.git"
   },
-  "version": "0.4.2",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.67.0"
   },
@@ -77,8 +77,8 @@
           },
           "OBS-DeveloperUtil.timeSpeed": {
             "type": "number",
-            "default": 1500,
-            "description": "**Unit: ms**, When VSCode use ZenMode OBS will record by this speed, just like time lapse"
+            "default": 10000,
+            "description": "**Unit: ms, Default: 10000ms**, When VSCode use ZenMode OBS will record by this speed, just like time lapse"
           }
         }
       }
@@ -194,9 +194,10 @@
     "build:emptyWebview-ui": "yarn vite build --emptyOutDir",
     "vscode:prepublish": "yarn run compile",
     "compile": "yarn run build:emptyWebview-ui && tsc -p ./",
+    "compile:test": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest:e2e": "yarn run compile && yarn run lint",
-    "pretest": "yarn run compile && yarn run lint",
+    "pretest": "yarn run compile:test && yarn run lint --fix",
     "lint": "eslint src --ext ts",
     "test:e2e": "node ./out/src/test/runTest.js",
     "test": "jest",

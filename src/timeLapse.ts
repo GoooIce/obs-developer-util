@@ -1,31 +1,13 @@
 import * as vscode from 'vscode';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { interval, tap, Subscription, merge, combineLatestWith } from 'rxjs';
+
+import { Subscription, timer } from 'rxjs';
 
 import { exitZenModeId, isZenModeState, toggleZenModeId } from './enum';
 
 import { OBSSubject } from './obs-websocket/subject';
 
 export function makeLapseObservable(timeSpeed: number) {
-  // const getOBS = vscode.extensions.getExtension(extensionKey)?.exports.getOBS;
-  const obs = OBSSubject.getSubject(); // getOBS();
-  const timeRecord$ = interval(100).pipe(
-    tap(() => {
-      obs.PauseRecord().subscribe();
-    })
-  );
-  const timeLapse$ = interval(timeSpeed).pipe(
-    tap({
-      next: () => {
-        obs.ResumeRecord().subscribe();
-      },
-    }),
-    combineLatestWith(timeRecord$)
-  );
-
-  return timeLapse$;
-
-  // return merge(timeLapse$, timeRecord$);
+  return timer(0, timeSpeed);
 }
 
 export function onDidZenMode(
@@ -41,28 +23,42 @@ export function onDidZenMode(
 
   context.subscriptions.push(
     vscode.commands.registerCommand(toggleZenModeId, () => {
-      if (config.timeSpeed < 1000) {
-        vscode.window.showErrorMessage('请勿设置小于');
-      }
-      // vscode.window.showInformationMessage('zen');
       context.workspaceState.update(isZenModeState, true);
       vscode.commands.executeCommand('workbench.action.toggleZenMode');
       const isRecording = context.workspaceState.get('isRecording');
       if (isRecording) {
         const timeLapse$ = makeLapseObservable(config.timeSpeed);
+        const obs = OBSSubject.getSubject();
+        obs.SetCurrentProgramScene('Desktop').subscribe();
+        // obs.PauseRecord().subscribe();
 
-        timeLapseSubscription = timeLapse$.subscribe();
+        let _timer: Subscription;
+
+        timeLapseSubscription = timeLapse$.subscribe({
+          next: () => {
+            obs.ResumeRecord().subscribe(() => {
+              _timer = timer(1000).subscribe(() => obs.PauseRecord().subscribe());
+            });
+          },
+          complete: () => {
+            _timer.unsubscribe();
+            obs.ResumeRecord().subscribe();
+          },
+        });
       }
     })
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(exitZenModeId, () => {
-      // vscode.window.showInformationMessage('exit zen');
-      context.workspaceState.update(isZenModeState, true);
+      context.workspaceState.update(isZenModeState, false);
       vscode.commands.executeCommand('workbench.action.exitZenMode');
       const isRecording = context.workspaceState.get('isRecording');
       if (isRecording) {
         timeLapseSubscription.unsubscribe();
+        const obs = OBSSubject.getSubject();
+        obs.GetRecordStatus().subscribe((x) => {
+          if (x.responseData.outputPaused) obs.ResumeRecord().subscribe();
+        });
       }
     })
   );

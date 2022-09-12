@@ -212,4 +212,10 @@ export class OBSSubject implements OnWebSocketLife {
   public PauseRecord() {
     return this._api('PauseRecord') as unknown as Observable<ResponseMessage<'PauseRecord'>>;
   }
+
+  public ToggleRecordPause() {
+    return this._api('ToggleRecordPause') as unknown as Observable<
+      ResponseMessage<'ToggleRecordPause'>
+    >;
+  }
 }

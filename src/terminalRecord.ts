@@ -19,6 +19,9 @@ export function onDidChangeTerminalState(context: vscode.ExtensionContext) {
           // eslint-disable-next-line no-inner-declarations
           function changeScene<T>(sceneName: string) {
             return (_e: T): void => {
+              if (context.workspaceState.get<boolean>(isZenModeState)) {
+                return;
+              }
               const currObsSceneName = context.workspaceState.get('obs-scene');
               if (currObsSceneName === sceneName) return;
               obs.SetCurrentProgramScene(sceneName).subscribe({
@@ -112,7 +115,7 @@ function createObsTerminal(context: vscode.ExtensionContext) {
   vscode.window.createTerminal(obs_opts);
 
   vscode.tasks.onDidStartTask((e) => {
-    if (context.workspaceState.get(isZenModeState)) {
+    if (context.workspaceState.get<boolean>(isZenModeState)) {
       return;
     }
     const obs = OBSSubject.getSubject();
@@ -123,7 +126,7 @@ function createObsTerminal(context: vscode.ExtensionContext) {
   });
   // vscode.tasks.onDidStartTaskProcess((e) => console.dir(e));
   vscode.tasks.onDidEndTask((e) => {
-    if (context.workspaceState.get(isZenModeState)) {
+    if (context.workspaceState.get<boolean>(isZenModeState)) {
       return;
     }
     const obs = OBSSubject.getSubject();
