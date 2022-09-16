@@ -8,11 +8,11 @@ export default defineConfig({
       targets: ['defaults', 'not IE 11'],
     }),
   ],
-  root: './webview-ui',
+  root: './',
   publicDir: 'assets',
   assetsInclude: ['**/*.json'],
   build: {
-    outDir: '../out',
+    outDir: '../../out',
     rollupOptions: {
       output: {
         entryFileNames: `webview-ui/[name].js`,

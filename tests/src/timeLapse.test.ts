@@ -26,7 +26,7 @@ describe('timeLapse', () => {
         c: 2,
       };
       const _$ = makeLapseObservable(5000).pipe(take(3));
-      _$.subscribe(console.log);
+      // _$.subscribe(console.log);
 
       expectObservable(_$).toBe(timeLine, values);
     });

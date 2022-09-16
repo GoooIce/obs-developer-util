@@ -20,6 +20,7 @@ export function onDidZenMode(
   }
 ) {
   let timeLapseSubscription: Subscription;
+  let pauseTimer: Subscription;
 
   context.subscriptions.push(
     vscode.commands.registerCommand(toggleZenModeId, () => {
@@ -30,18 +31,20 @@ export function onDidZenMode(
         const timeLapse$ = makeLapseObservable(config.timeSpeed);
         const obs = OBSSubject.getSubject();
         obs.SetCurrentProgramScene('Desktop').subscribe();
+        obs.GetRecordStatus().subscribe((x) => {
+          // Todo: 存储时间戳
+          // if (x.responseData.outputPaused) obs.ResumeRecord().subscribe();
+          console.log(x.responseData);
+        });
         // obs.PauseRecord().subscribe();
-
-        let _timer: Subscription;
 
         timeLapseSubscription = timeLapse$.subscribe({
           next: () => {
             obs.ResumeRecord().subscribe(() => {
-              _timer = timer(1000).subscribe(() => obs.PauseRecord().subscribe());
+              pauseTimer = timer(1000).subscribe(() => obs.PauseRecord().subscribe());
             });
           },
           complete: () => {
-            _timer.unsubscribe();
             obs.ResumeRecord().subscribe();
           },
         });
@@ -55,9 +58,12 @@ export function onDidZenMode(
       const isRecording = context.workspaceState.get('isRecording');
       if (isRecording) {
         timeLapseSubscription.unsubscribe();
+        pauseTimer.unsubscribe();
         const obs = OBSSubject.getSubject();
         obs.GetRecordStatus().subscribe((x) => {
+          // Todo: 存储时间戳
           if (x.responseData.outputPaused) obs.ResumeRecord().subscribe();
+          console.log(x.responseData);
         });
       }
     })
