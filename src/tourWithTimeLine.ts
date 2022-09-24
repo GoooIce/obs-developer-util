@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+
 // Check if the end-user has the CodeTour extension installed.
 const codeTourExtension = vscode.extensions.getExtension('vsls-contrib.codetour');
 if (codeTourExtension) {
