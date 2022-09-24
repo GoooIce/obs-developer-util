@@ -36,7 +36,8 @@
     "ui"
   ],
   "extensionDependencies": [
-    "johnpapa.vscode-peacock"
+    "johnpapa.vscode-peacock",
+    "vsls-contrib.codetour"
   ],
   "activationEvents": [
     "workspaceContains:*"
