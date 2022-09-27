@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "安装",
+  "steps": [
+    {
+      "file": "package.json",
+      "description": "### 可以使用喜欢的包管理工具安装\n\n## npm\n>> npm i\n\n## pnpm\n>> pnpm i\n\n## yarn\n>> yarn",
+      "line": 2
+    }
+  ]
+}
