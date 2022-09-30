@@ -88,10 +88,10 @@ function ganVideoObject(
       });
   });
 
-  codeTourApi.onDidEndTour((tour: { title: string }) => {
+  codeTourApi.onDidEndTour((_tour: { title: string }) => {
     const part = {
       '@type': 'Clip',
-      name: `结束语: ${tour.title}`,
+      name: `结束语`,
       offset: '-1',
     };
 

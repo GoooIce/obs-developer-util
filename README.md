@@ -4,13 +4,12 @@
 
 使用 VSCode 连接并控制 OBS 录像。
 
-开始录制前 VSCode 通过变换 3 次边框颜色提示(依赖 peacock 插件实现)，颜色清零时开始录制。
-
 OBS 插件依赖：
 [obs-websocket](https://github.com/obsproject/obs-websocket) 5.0+
 
 VSC 插件依赖：
 [johnpapa.vscode-peacock](https://marketplace.visualstudio.com/items?itemName=johnpapa.vscode-peacock)
+[codetour](https://aka.ms/codetour)
 
 插件安装：
 插件市场搜索[OBS-DeveloperUtil](https://marketplace.visualstudio.com/items?itemName=GoooIce.obs-developer-util)
@@ -27,12 +26,48 @@ This extension contributes the following settings:
 - `OBS-DeveloperUtil.address`: set OBS Websocket address
 - `OBS-DeveloperUtil.visualCues`: set OBS Record starter animal
 - `OBS-DeveloperUtil.timeSpeed`: time lapse range
+- `OBS-DeveloperUtil.stopRecordWithTour`: record feat with [codetour](https://aka.ms/codetour)
 
 ## Known Issues
 
 Calling out known issues can help limit users opening duplicate issues against your extension.
 
 ## Release Notes
+
+### 1.1.0
+
+1. 增加 codetour 互动录制，录制完成后会在根目录下生成`tourVideoObject.json`文件
+2. 增加配置项`stopRecordWithTour`完成教程后自动停止录制
+
+```json
+{
+  "@context": "https://schema.org/",
+  "@type": "VideoObject",
+  "name": "codetour video",
+  "hasPart": [
+    { "@type": "Clip", "name": "前言", "offset": "0" },
+    {
+      "@type": "Clip",
+      "name": "0: 介绍",
+      "offset": "00:00:02.633",
+      "duration": 2633
+    },
+    {
+      "@type": "Clip",
+      "name": "1: 安装",
+      "offset": "00:00:04.999",
+      "duration": 4999
+    },
+    {
+      "@type": "Clip",
+      "name": "2: 编码",
+      "offset": "00:00:07.666",
+      "duration": 7666
+    },
+    { "@type": "Clip", "name": "结束语", "offset": "-1" }
+  ]
+}
+```
 
 ### 1.0.0
 
