@@ -5,6 +5,7 @@ import { Subscription, timer } from 'rxjs';
 import { exitZenModeId, isZenModeState, toggleZenModeId } from './enum';
 
 import { OBSSubject } from './obs-websocket/subject';
+import { lapsePart, videoObjectTemplate } from './video_object_json';
 
 export function makeLapseObservable(timeSpeed: number) {
   return timer(0, timeSpeed);
@@ -33,8 +34,12 @@ export function onDidZenMode(
         obs.SetCurrentProgramScene('Desktop').subscribe();
         obs.GetRecordStatus().subscribe((x) => {
           // Todo: 存储时间戳
+          // bug: isn't run
+          // bug: es build eval
           // if (x.responseData.outputPaused) obs.ResumeRecord().subscribe();
-          console.log(x.responseData);
+          // console.log(x.responseData);
+          lapsePart.startDuration = x.responseData.outputDuration;
+          lapsePart.startOffset = x.responseData.outputTimecode;
         });
         // obs.PauseRecord().subscribe();
 
@@ -63,7 +68,11 @@ export function onDidZenMode(
         obs.GetRecordStatus().subscribe((x) => {
           // Todo: 存储时间戳
           if (x.responseData.outputPaused) obs.ResumeRecord().subscribe();
-          console.log(x.responseData);
+          lapsePart.endDuration = x.responseData.outputDuration;
+          lapsePart.endOffset = x.responseData.outputTimecode;
+
+          videoObjectTemplate.hasPart.push(lapsePart);
+          // console.log(x.responseData);
         });
       }
     })

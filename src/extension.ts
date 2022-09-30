@@ -18,6 +18,9 @@ import {
   recordCommandId,
   stopRecordCommandId,
 } from './enum';
+import { writeFileSync } from 'fs';
+import { videoObjectTemplate } from './video_object_json';
+
 import { OBSSubject } from './obs-websocket/subject';
 import { onDidToursRecord } from './tourWithTimeLine';
 
@@ -91,11 +94,27 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(stopRecordCommandId, () => {
+      let videoObjectPath: string;
+      if (vscode.workspace.workspaceFolders)
+        videoObjectPath = vscode.workspace.workspaceFolders[0].uri.path;
       if (context.workspaceState.get('isRecording'))
         obs._api('StopRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', false);
+              writeFileSync(
+                `${videoObjectPath}/tourVideoObject.json`,
+                JSON.stringify(videoObjectTemplate)
+              );
+
+              videoObjectTemplate.hasPart = [
+                {
+                  '@type': 'Clip',
+                  name: '前言',
+                  offset: '00:00:00.000',
+                  duration: 0,
+                },
+              ];
               statusBarItem$.next();
             }
           },

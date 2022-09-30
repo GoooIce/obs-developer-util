@@ -185,13 +185,11 @@
     "keybindings": [
       {
         "command": "OBS-DeveloperUtil.toggleZenMode",
-        "key": "Ctrl+K Z",
-        "when": "OBS-DeveloperUtil.remoteOBSidentified"
+        "key": "Ctrl+K Z"
       },
       {
         "command": "OBS-DeveloperUtil.exitZenMode",
-        "key": "Escape Escape",
-        "when": "OBS-DeveloperUtil.remoteOBSidentified"
+        "key": "Escape Escape"
       }
     ]
   },
