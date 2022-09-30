@@ -53,6 +53,7 @@ export function onDidToursRecord(
   }
 }
 
+// TODO: 关联 .tour steps的描述字段
 function ganVideoObject(
   config: {
     obs_ws_address?: string;
@@ -89,6 +90,7 @@ function ganVideoObject(
   });
 
   codeTourApi.onDidEndTour((_tour: { title: string }) => {
+    // TODO: config.stopRecordWithTour === false 记录结束时间戳
     const part = {
       '@type': 'Clip',
       name: `结束语`,
