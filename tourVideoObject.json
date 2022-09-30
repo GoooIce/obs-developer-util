@@ -1,0 +1,10 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "VideoObject",
+  "name": "codetour video",
+  "hasPart": [
+    { "@type": "Clip", "name": "前言", "offset": "0" },
+    { "@type": "Clip", "name": "0: 安装", "offset": "00:00:03.566", "duration": 3566 },
+    { "@type": "Clip", "name": "结束语", "offset": "-1" }
+  ]
+}

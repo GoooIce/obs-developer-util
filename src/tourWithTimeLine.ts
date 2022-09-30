@@ -13,7 +13,8 @@ const _json_ld_template = {
     {
       '@type': 'Clip',
       name: '前言',
-      offset: '0',
+      offset: '00:00:00.000',
+      duration: 0,
     },
   ],
 };
@@ -74,14 +75,14 @@ function ganVideoObject(
     const obs = OBSSubject.getSubject();
     obs
       .GetRecordStatus()
-      .pipe(map((res) => [res.responseData.outputDuration, res.responseData.outputTimecode]))
+      .pipe(map((res) => res.responseData))
       .subscribe({
-        next([_outputDuration, _outputTimecode]) {
+        next(resData) {
           const part = {
             '@type': 'Clip',
             name: `${stepNumber}: ${tour.title}`,
-            offset: `${_outputTimecode}`,
-            duration: _outputDuration,
+            offset: resData.outputTimecode,
+            duration: resData.outputDuration,
           };
 
           _json_ld_template.hasPart.push(part);
@@ -90,27 +91,35 @@ function ganVideoObject(
   });
 
   codeTourApi.onDidEndTour((_tour: { title: string }) => {
-    // TODO: config.stopRecordWithTour === false 记录结束时间戳
-    const part = {
-      '@type': 'Clip',
-      name: `结束语`,
-      offset: '-1',
-    };
+    const obs = OBSSubject.getSubject();
+    obs
+      .GetRecordStatus()
+      .pipe(map((res) => res.responseData))
+      .subscribe({
+        next(resData) {
+          const part = {
+            '@type': 'Clip',
+            name: '结束语',
+            offset: resData.outputTimecode,
+            duration: resData.outputDuration,
+          };
 
-    _json_ld_template.hasPart.push(part);
+          _json_ld_template.hasPart.push(part);
+          writeFileSync(`${tourPath}/tourVideoObject.json`, JSON.stringify(_json_ld_template));
 
-    writeFileSync(`${tourPath}/tourVideoObject.json`, JSON.stringify(_json_ld_template));
+          _json_ld_template.hasPart = [
+            {
+              '@type': 'Clip',
+              name: '前言',
+              offset: '00:00:00.000',
+              duration: 0,
+            },
+          ];
 
-    _json_ld_template.hasPart = [
-      {
-        '@type': 'Clip',
-        name: '前言',
-        offset: '0',
-      },
-    ];
-
-    const isRecording = _context.workspaceState.get('isRecording');
-    if (isRecording && config.stopRecordWithTour)
-      vscode.commands.executeCommand(stopRecordCommandId);
+          const isRecording = _context.workspaceState.get('isRecording');
+          if (isRecording && config.stopRecordWithTour)
+            vscode.commands.executeCommand(stopRecordCommandId);
+        },
+      });
   });
 }
