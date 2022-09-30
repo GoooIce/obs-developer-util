@@ -196,10 +196,10 @@
     ]
   },
   "scripts": {
-    "build:webview-ui": "yarn --cwd ./webview-ui vite build",
-    "build:emptyWebview-ui": "yarn --cwd ./webview-ui vite build --emptyOutDir",
+    "build:webview-ui": "yarn vite build -c ./webview-ui/vite.config.ts",
+    "build:emptyWebview-ui": "yarn vite build -c ./webview-ui/vite.config.ts --emptyOutDir",
     "vscode:prepublish": "yarn run compile",
-    "compile": "yarn run build:emptyWebview-ui && yarn esbuild",
+    "compile": "yarn run build:emptyWebview-ui && yarn esbuild --define:RELEASE=true",
     "compile:test": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/src/extension.js --external:vscode --format=cjs --platform=node",
