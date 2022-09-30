@@ -1,4 +1,5 @@
 import { writeFileSync, existsSync } from 'fs';
+// import { config } from 'process';
 import { map } from 'rxjs';
 import * as vscode from 'vscode';
 import { stopRecordCommandId } from './enum';
@@ -17,7 +18,16 @@ const _json_ld_template = {
   ],
 };
 
-export function onDidToursRecord(_context: vscode.ExtensionContext) {
+export function onDidToursRecord(
+  _context: vscode.ExtensionContext,
+  config: {
+    obs_ws_address?: string;
+    autoConnect?: boolean | undefined;
+    visual_cue?: string;
+    timeSpeed?: number;
+    stopRecordWithTour?: boolean;
+  }
+) {
   // Check if the end-user has the CodeTour extension installed.
   const codeTourExtension = vscode.extensions.getExtension('vsls-contrib.codetour');
   if (codeTourExtension) {
@@ -29,7 +39,12 @@ export function onDidToursRecord(_context: vscode.ExtensionContext) {
 
       if (existsSync(tourFolder.fsPath)) {
         // changeObsOutputConfig(tourFolder.uri.fsPath);
-        ganVideoObject(_context, codeTourApi, vscode.workspace.workspaceFolders[0].uri.fsPath);
+        ganVideoObject(
+          config,
+          _context,
+          codeTourApi,
+          vscode.workspace.workspaceFolders[0].uri.fsPath
+        );
       }
     }
 
@@ -39,6 +54,13 @@ export function onDidToursRecord(_context: vscode.ExtensionContext) {
 }
 
 function ganVideoObject(
+  config: {
+    obs_ws_address?: string;
+    autoConnect?: boolean | undefined;
+    visual_cue?: string;
+    timeSpeed?: number;
+    stopRecordWithTour?: boolean;
+  },
   _context: vscode.ExtensionContext,
   codeTourApi: {
     onDidStartTour: (arg0: ([tour, stepNumber]: [{ title: string }, number]) => void) => void;
@@ -86,6 +108,7 @@ function ganVideoObject(
     ];
 
     const isRecording = _context.workspaceState.get('isRecording');
-    if (isRecording) vscode.commands.executeCommand(stopRecordCommandId);
+    if (isRecording && config.stopRecordWithTour)
+      vscode.commands.executeCommand(stopRecordCommandId);
   });
 }

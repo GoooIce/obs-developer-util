@@ -166,7 +166,7 @@ export async function activate(context: vscode.ExtensionContext) {
             },
           });
 
-          onDidToursRecord(context);
+          onDidToursRecord(context, config);
 
           onDidChangeTerminalState(context);
           onDidZenMode(context, config);
@@ -246,11 +246,13 @@ export async function activate(context: vscode.ExtensionContext) {
     const visual_cue = config.get<string>('visualCues', 'timer');
     const autoConnect = config.get<boolean>('autoConnect');
     const timeSpeed = config.get<number>('timeSpeed', 10000);
+    const stopRecordWithTour = config.get<boolean>('stopRecordWithTour');
     return {
       obs_ws_address,
       autoConnect,
       visual_cue,
       timeSpeed,
+      stopRecordWithTour,
     };
   }
 

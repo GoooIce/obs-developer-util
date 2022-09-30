@@ -80,6 +80,11 @@
             "type": "number",
             "default": 10000,
             "description": "**Unit: ms, Default: 10000ms**, When VSCode use ZenMode OBS will record by this speed, just like time lapse"
+          },
+          "OBS-DeveloperUtil.stopRecordWithTour": {
+            "type": "boolean",
+            "default": true,
+            "description": "If active, this extension will try to automatically stop record when tour finnish"
           }
         }
       }
