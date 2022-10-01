@@ -96,14 +96,14 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(stopRecordCommandId, () => {
       let videoObjectPath: string;
       if (vscode.workspace.workspaceFolders)
-        videoObjectPath = vscode.workspace.workspaceFolders[0].uri.path;
+        videoObjectPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
       if (context.workspaceState.get('isRecording'))
         obs._api('StopRecord').subscribe({
           next(msg) {
             if (msg.requestStatus) {
               context.workspaceState.update('isRecording', false);
               writeFileSync(
-                `${videoObjectPath}/tourVideoObject.json`,
+                `${videoObjectPath}/VideoObject.json`,
                 JSON.stringify(videoObjectTemplate)
               );
 
