@@ -25,7 +25,7 @@
     "type": "git",
     "url": "https://github.com/GoooIce/obs-developer-util.git"
   },
-  "version": "1.1.2",
+  "version": "1.1.3",
   "engines": {
     "vscode": "^1.67.0"
   },
@@ -197,7 +197,7 @@
     "build:webview-ui": "yarn vite build -c ./webview-ui/vite.config.ts",
     "build:emptyWebview-ui": "yarn vite build -c ./webview-ui/vite.config.ts --emptyOutDir",
     "vscode:prepublish": "yarn run compile",
-    "compile": "yarn run build:emptyWebview-ui && yarn esbuild --define:RELEASE=true",
+    "compile": "yarn run build:emptyWebview-ui && yarn esbuild --external:keytar --define:RELEASE=true",
     "compile:test": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/src/extension.js --external:vscode --format=cjs --platform=node",
